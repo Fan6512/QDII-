@@ -1,0 +1,12 @@
+{
+  "name": "qdii-limit-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test_merge.mjs"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.3"
+  }
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>场外 QDII 指数基金 · 今日限买额度</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1a1d24; --sub:#6b7280; --line:#eceef1;
+    --accent:#2563eb; --sp:#7c3aed; --eq:#f97316; --open:#16a34a; --paused:#dc2626;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5;padding:16px 14px 40px}
+  .wrap{max-width:560px;margin:0 auto}
+  header{margin-bottom:14px}
+  h1{font-size:20px;font-weight:700;letter-spacing:.3px}
+  .sub{font-size:12.5px;color:var(--sub);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--open);display:inline-block}
+  .badge-update{background:#eef2ff;color:var(--accent);padding:2px 8px;border-radius:999px;font-size:11.5px}
+  .tabs{display:flex;gap:8px;margin:14px 0 12px}
+  .tab{flex:1;text-align:center;padding:9px 0;border-radius:12px;background:var(--card);
+    font-size:13.5px;color:var(--sub);border:1px solid var(--line);cursor:pointer;transition:.15s}
+  .tab.active{color:#fff;background:var(--ink);border-color:var(--ink);font-weight:600}
+  .sort{font-size:12.5px;color:var(--sub);text-align:right;margin:-4px 2px 12px;cursor:pointer}
+  .grid{display:grid;gap:11px}
+  .card{background:var(--card);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow);
+    border:1.5px solid transparent;position:relative;overflow:hidden}
+  .card.eq{border-color:var(--eq)}
+  .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .fname{font-size:15px;font-weight:650;line-height:1.35}
+  .fcode{font-size:11.5px;color:var(--sub);margin-top:2px;letter-spacing:.5px}
+  .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;white-space:nowrap}
+  .tag.nasdaq{background:#e8f0fe;color:var(--accent)}
+  .tag.sp{background:#f3e8ff;color:var(--sp)}
+  .tag.eq{background:#fff1e6;color:var(--eq);border:1px solid var(--eq)}
+  .quota{margin-top:13px;display:flex;align-items:baseline;gap:6px}
+  .quota .lbl{font-size:12px;color:var(--sub)}
+  .quota .val{font-size:30px;font-weight:800;letter-spacing:-.5px}
+  .quota .val.tiny{font-size:18px;font-weight:700}
+  .quota .unit{font-size:13px;color:var(--sub);font-weight:600}
+  .meta{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--sub)}
+  .meta b{color:var(--ink);font-weight:600}
+  .right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+  .tags{display:flex;gap:6px;align-items:center}
+  .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .pill.open{background:#e9f9ef;color:var(--open)}
+  .pill.paused{background:#fdeaea;color:var(--paused)}
+  footer{margin-top:22px;font-size:11px;color:#9aa1ac;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
+  footer b{color:var(--sub)}
+  .loading,.err{padding:40px 0;text-align:center;color:var(--sub);font-size:14px}
+  .err{color:var(--paused)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>场外 QDII 指数基金 · 今日限买</h1>
+    <div class="sub">
+      <span class="dot"></span>
+      <span>只回答三件事：是不是纳指100/标普500 · 追踪还是等权 · 今天最多买多少</span>
+    </div>
+    <div class="sub" style="margin-top:8px">
+      <span class="badge-update" id="updTime">数据更新中…</span>
+      <span id="updCount"></span>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-cat="all">全部</div>
+    <div class="tab" data-cat="NASDAQ100">纳指100</div>
+    <div class="tab" data-cat="SP500">标普500</div>
+  </div>
+  <div class="sort" id="sortBtn">⇅ 按「今日限买」排序（小→大）</div>
+
+  <div class="grid" id="grid">
+    <div class="loading">正在加载额度数据…</div>
+  </div>
+
+  <footer>
+    <b>口径说明：</b>「今日限买」= 单日累计申购上限（元），取自代销平台展示值；「起购」= 单笔最低金额；「优惠费率」= 天天基金等代销平台实际费率（非原费率）。<br/>
+    <b>风险提示：</b>QDII 限购额度 / 暂停状态变动频繁，本页数据仅供参考，不构成投资建议。实际以基金公司 / 销售平台公告为准。
+  </footer>
+</div>
+
+<script>
+let FUNDS = [], META = null, curCat = "all", sortAsc = true;
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>'\"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[char]));
+}
+
+const catLabel = c => c === "NASDAQ100" ? {t:"纳指100", cls:"nasdaq"}
+                       : c === "SP500" ? {t:"标普500", cls:"sp"} : {t:"", cls:""};
+
+function fmtLimit(v){
+  if (v === null || v === undefined) return {txt:"无上限", tiny:true};
+  return {txt: v.toLocaleString("zh-CN"), tiny:false};
+}
+
+function render(){
+  const list = FUNDS.filter(f => curCat === "all" || f.category === curCat);
+  list.sort((a,b)=>{
+    const va = a.limit_daily ?? Infinity, vb = b.limit_daily ?? Infinity;
+    return sortAsc ? va - vb : vb - va;
+  });
+  const grid = document.getElementById("grid");
+  if(!list.length){ grid.innerHTML = '<div class="loading">该分类下暂无基金</div>'; return; }
+  grid.innerHTML = list.map(f=>{
+    const cl = catLabel(f.category);
+    const lim = fmtLimit(f.limit_daily);
+    const eq = f.trackType === "equal_weight";
+    const paused = f.status === "paused";
+    return `
+    <div class="card ${eq?'eq':''}">
+      <div class="row1">
+        <div>
+          <div class="fname">${escapeHtml(f.short_name)}</div>
+          <div class="fcode">${escapeHtml(f.code)}</div>
+        </div>
+        <div class="right">
+          <div class="tags">
+            <span class="tag ${cl.cls}">${cl.t}</span>
+            ${eq?'<span class="tag eq">等权</span>':''}
+          </div>
+          <span class="pill ${paused?'paused':'open'}">${paused?'暂停':'开放'}</span>
+        </div>
+      </div>
+      <div class="quota">
+        <span class="lbl">今日限买</span>
+        <span class="val ${lim.tiny?'tiny':''}">${lim.txt}</span>
+        <span class="unit">元</span>
+      </div>
+      <div class="meta">
+        <span>起购 <b>¥${escapeHtml(f.min_subscribe ?? '-')}</b></span>
+        <span>优惠费率 <b>${escapeHtml(f.fee_discount ?? '-')}%</b></span>
+        <span>原费率 <b>${escapeHtml(f.fee_original ?? '-')}%</b></span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function applyUpdateMeta(){
+  if(!META) return;
+  const u = META.last_auto_update || META.generated_at || META.last_merge_at || "—";
+  document.getElementById("updTime").textContent = "更新于 " + u;
+  const s = META.summary || {};
+  document.getElementById("updCount").textContent =
+    `共 ${FUNDS.length} 只 · 纳指${s.nasdaq100||0} · 标普${s.sp500||0} · 等权${s.equal_weight||0}`;
+}
+
+async function load(){
+  try{
+    const res = await fetch("/api/data", {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    META = data._meta; FUNDS = data.funds || [];
+    applyUpdateMeta(); render();
+  }catch(e){
+    document.getElementById("grid").innerHTML =
+      `<div class="err">加载失败：${e.message}</div>`;
+  }
+}
+
+document.getElementById("tabs").addEventListener("click", e=>{
+  const t = e.target.closest(".tab"); if(!t) return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active"); curCat = t.dataset.cat; render();
+});
+document.getElementById("sortBtn").addEventListener("click", ()=>{
+  sortAsc = !sortAsc;
+  document.getElementById("sortBtn").textContent =
+    "⇅ 按「今日限买」排序（" + (sortAsc?"小→大":"大→小") + "）";
+  render();
+});
+
+load();
+</script>
+</body>
+</html>
