@@ -146,7 +146,8 @@ def main():
                 "category": category,
                 "trackType": track,
                 "company": r["company"],
-                "status": "open" if r["isbuy"] == "1" else ("paused" if r["isbuy"] in ("0",) else "open"),
+                # Missing or unfamiliar source values are not evidence of an open subscription.
+                "status": "open" if r["isbuy"] == "1" else ("paused" if r["isbuy"] == "0" else "unknown"),
                 "min_subscribe": int(r["minsg"]) if r["minsg"] else None,
                 "limit_daily": daily,
                 "fee_original": fo,

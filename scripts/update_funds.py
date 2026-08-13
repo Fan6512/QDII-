@@ -52,7 +52,7 @@ def fetch_status_and_min(code):
         if fbi.get("CODE") == code:
             isbuy = str(fbi.get("ISBUY", ""))
             minsg = fbi.get("MINSG")
-            status = "open" if isbuy == "1" else "paused"
+            status = "open" if isbuy == "1" else ("paused" if isbuy == "0" else "unknown")
             return status, (int(minsg) if minsg not in (None, "", 0) else None)
     return None, None
 

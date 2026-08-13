@@ -3,3 +3,5 @@ node_modules/
 .env.local
 .vercel/
 npm-debug.log*
+__pycache__/
+*.py[cod]

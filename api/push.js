@@ -18,9 +18,25 @@ export default async function handler(req) {
   // Upstash returns null for HMGET when the hash has not been created yet.
   const reviews = candidates.length ? (await redis.hmget("candidate-reviews", ...candidates.map((candidate) => candidate.code))) || [] : [];
   const pending = candidates.filter((_, index) => !reviews[index]);
+  const approved = await redis.hgetall("approved-funds");
+  const approvedUpdates = candidates.flatMap((candidate) => {
+    const saved = approved?.[candidate.code];
+    if (!saved) return [];
+    const fund = typeof saved === "string" ? JSON.parse(saved) : saved;
+    const dynamic = {
+      ...fund,
+      limit_daily: candidate.limit_daily ?? fund.limit_daily,
+      fee_original: candidate.fee_original ?? fund.fee_original,
+      fee_discount: candidate.fee_discount ?? fund.fee_discount,
+      min_subscribe: candidate.min_subscribe ?? fund.min_subscribe,
+      status: candidate.status === "unknown" ? fund.status : candidate.status,
+    };
+    return [redis.hset("approved-funds", { [candidate.code]: JSON.stringify(dynamic) })];
+  });
   await Promise.all([
     redis.set("funds-db", nextFunds),
     ...pending.map((candidate) => redis.hset("candidates", { [candidate.code]: JSON.stringify({ ...candidate, review_status: "pending" }) })),
+    ...approvedUpdates,
   ]);
   return Response.json({ ok: true, summary: nextFunds._meta.summary, candidates_pending: pending.length });
 }

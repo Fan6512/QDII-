@@ -47,6 +47,7 @@
   .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
   .pill.open{background:#e9f9ef;color:var(--open)}
   .pill.paused{background:#fdeaea;color:var(--paused)}
+  .pill.unknown{background:#fff7ed;color:#b45309}
   footer{margin-top:22px;font-size:11px;color:#9aa1ac;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
   footer b{color:var(--sub)}
   .loading,.err{padding:40px 0;text-align:center;color:var(--sub);font-size:14px}
@@ -111,7 +112,9 @@ function render(){
     const cl = catLabel(f.category);
     const lim = fmtLimit(f.limit_daily);
     const eq = f.trackType === "equal_weight";
-    const paused = f.status === "paused";
+    const status = f.status === "open" ? { cls:"open", label:"开放" }
+      : f.status === "paused" ? { cls:"paused", label:"暂停" }
+      : { cls:"unknown", label:"待核验" };
     return `
     <div class="card ${eq?'eq':''}">
       <div class="row1">
@@ -124,7 +127,7 @@ function render(){
             <span class="tag ${cl.cls}">${cl.t}</span>
             ${eq?'<span class="tag eq">等权</span>':''}
           </div>
-          <span class="pill ${paused?'paused':'open'}">${paused?'暂停':'开放'}</span>
+          <span class="pill ${status.cls}">${status.label}</span>
         </div>
       </div>
       <div class="quota">
