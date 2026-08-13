@@ -38,4 +38,13 @@ const afterApproval = syncCandidates(approved.store, local.candidates, [{ code: 
 assert.equal(afterApproval.candidates.length, 0);
 
 assert.deepEqual(recount([{ category: "SP500", trackType: "equal_weight" }]), { total: 1, nasdaq100: 0, sp500: 1, equal_weight: 1 });
+
+const pausedLast = (a, b, ascending) => {
+  const statusDiff = (a.status === "paused" ? 1 : 0) - (b.status === "paused" ? 1 : 0);
+  if (statusDiff) return statusDiff;
+  return ascending ? a.limit_daily - b.limit_daily : b.limit_daily - a.limit_daily;
+};
+const sortable = [{ code: "open", status: "open", limit_daily: 100 }, { code: "paused", status: "paused", limit_daily: 1 }, { code: "unknown", status: "unknown", limit_daily: 10 }];
+assert.equal([...sortable].sort((a, b) => pausedLast(a, b, true)).at(-1).code, "paused");
+assert.equal([...sortable].sort((a, b) => pausedLast(a, b, false)).at(-1).code, "paused");
 console.log("All merge and candidate-review tests passed.");

@@ -103,6 +103,10 @@ function fmtLimit(v){
 function render(){
   const list = FUNDS.filter(f => curCat === "all" || f.category === curCat);
   list.sort((a,b)=>{
+    // Paused products are always listed after available or unverified products.
+    const statusOrder = (fund) => fund.status === "paused" ? 1 : 0;
+    const statusDiff = statusOrder(a) - statusOrder(b);
+    if(statusDiff) return statusDiff;
     const va = a.limit_daily ?? Infinity, vb = b.limit_daily ?? Infinity;
     return sortAsc ? va - vb : vb - va;
   });
