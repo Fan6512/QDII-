@@ -1,6 +1,9 @@
 {
   "buildCommand": null,
   "framework": null,
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

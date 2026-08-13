@@ -1,0 +1,274 @@
+{
+  "_meta": {
+    "title": "场外 QDII 指数基金额度 - 核对版基金池",
+    "description": "用于 MVP 的基金清单，代码/费率/申购状态均经天天基金公开接口核对（非 LLM 臆造）。",
+    "generated_at": "2026-08-13",
+    "data_source": "天天基金（东方财富）公开接口",
+    "extraction_method": {
+      "基金代码/简称/申购状态/起购金额": "天天基金搜索 API https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx (FundBaseInfo.ISBUY=1 表示开放申购, MINSG 为起购金额)",
+      "申购费率": "天天基金费率页 https://fundf10.eastmoney.com/jjfl_{code}.html（解析「申购费率」表中「小于50万元/小于100万元」档的 原费率 与 天天基金优惠费率）",
+      "存在性初筛": "NeoData 金融搜索服务（仅确认基金存在，不含费率/限购）"
+    },
+    "字段口径说明": {
+      "code": "6 位基金代码（场外 A 类人民币份额），已逐只核对",
+      "category": "NASDAQ100=纳斯达克100, SP500=标普500",
+      "trackType": "index=追踪指数(市值加权), equal_weight=等权指数",
+      "fee_original": "基金《招募说明书》规定的标准申购费率（前端，小于 50万/100万 档）",
+      "fee_discount": "天天基金(代销)优惠费率，即普通投资者在代销平台实际支付费率；其余平台可能不同",
+      "status": "open=当前可申购(未暂停), paused=暂停申购",
+      "min_subscribe": "单笔起购金额（元）。注意：这是起购门槛，不是单日限购上限",
+      "limit_daily": "单日申购上限（元），由脚本自动抓取自天天基金 jjfl 费率页「日累计申购限额」字段；为 None 表示该基金无单日上限限制"
+    },
+    "重要提醒": [
+      "本清单已剔除 2 只 ChatGPT 幻觉出的不存在基金：汇添富标普500ETF联接人民币A、南方标普500指数发起A（汇添富/南方确有纳指100联接，但不是标普500）",
+      "代码 539001、000834 真实有效，但属于「纳指100」（建信纳指 / 大成纳指），此前 ChatGPT 误将其用于标普500；标普500 摩根/大成代码应为 017641 / 096001",
+      "纳指100 已补全至 11 只：含建信(539001)、大成(000834)、汇添富(018966)、广发(270042) 四只新增",
+      "费率展示务必标注「天天基金代销优惠」口径，避免与费率优惠混同",
+      "页面「今天最多能买多少」应取 limit_daily(单日限购)，不可用 min_subscribe(起购) 冒充",
+      "QDII 限购额度/暂停状态变动频繁，上线后必须标注数据更新时间并以官方公告为准"
+    ],
+    "rejected_funds": [
+      {
+        "name": "汇添富标普500ETF联接人民币A",
+        "reason": "天天基金搜索无对应产品，汇添富无此场外标普500联接基金（但有纳指100联接 018966）",
+        "source": "fundsuggest.eastmoney.com 2026-08-13"
+      },
+      {
+        "name": "南方标普500指数发起A",
+        "reason": "南方基金仅有标普500ETF(513650,场内)，无场外标普500指数发起A类（但有纳指100发起 016452）",
+        "source": "fundsuggest.eastmoney.com 2026-08-13"
+      }
+    ],
+    "summary": {
+      "total": 13,
+      "nasdaq100": 11,
+      "sp500": 2,
+      "equal_weight": 1
+    },
+    "fields_updated_note": "limit_daily 已由脚本抓取自天天基金 jjfl 费率页的「日累计申购限额」字段(2026-08-13)，这是工具核心字段；min_subscribe 仍为起购门槛",
+    "last_auto_update": "2026-08-13",
+    "update_method": "脚本自动刷新(update_funds.py)：动态字段取自天天基金公开页面(搜索API FundBaseInfo + jjfl 费率页)，静态字段(code/name/category/trackType)由人工维护",
+    "last_discover_at": "2026-08-13",
+    "candidates_note": "顶层 candidates 数组由 auto_discover.py 自动发现、待人工确认后并入 funds。确认方式：在对话里让助手执行 merge_candidates.py 按代码合入，再重新部署，网页即更新。绝不自动加入 funds。"
+  },
+  "funds": [
+    {
+      "code": "019172",
+      "name": "摩根纳斯达克100指数(QDII)人民币A",
+      "short_name": "摩根纳斯达克100指数A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "019547",
+      "name": "招商纳斯达克100ETF发起式联接(QDII)A",
+      "short_name": "招商纳斯达克100ETF联接A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "019524",
+      "name": "华泰柏瑞纳斯达克100ETF发起式联接(QDII)A",
+      "short_name": "华泰柏瑞纳斯达克100ETF联接A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "040046",
+      "name": "华安纳斯达克100ETF联接(QDII)A",
+      "short_name": "华安纳斯达克100ETF联接A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "016452",
+      "name": "南方纳斯达克100指数发起(QDII)A",
+      "short_name": "南方纳斯达克100指数发起A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "019441",
+      "name": "万家纳斯达克100指数发起式(QDII)A",
+      "short_name": "万家纳斯达克100指数发起A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.0,
+      "fee_discount": 0.1,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "019736",
+      "name": "宝盈纳斯达克100指数发起(QDII)A人民币",
+      "short_name": "宝盈纳斯达克100指数发起A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "539001",
+      "name": "建信纳斯达克100指数(QDII)A人民币",
+      "short_name": "建信纳斯达克100指数A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 100
+    },
+    {
+      "code": "000834",
+      "name": "大成纳斯达克100ETF联接(QDII)A",
+      "short_name": "大成纳斯达克100ETF联接A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "018966",
+      "name": "汇添富纳斯达克100ETF发起式联接(QDII)人民币A",
+      "short_name": "汇添富纳斯达克100ETF联接A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "270042",
+      "name": "广发纳斯达克100ETF联接人民币(QDII)A",
+      "short_name": "广发纳斯达克100ETF联接A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "fee_original": 1.3,
+      "fee_discount": 0.13,
+      "status": "open",
+      "min_subscribe": 5,
+      "limit_daily": 5
+    },
+    {
+      "code": "017641",
+      "name": "摩根标普500指数(QDII)人民币A",
+      "short_name": "摩根标普500指数A",
+      "category": "SP500",
+      "trackType": "index",
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    },
+    {
+      "code": "096001",
+      "name": "大成标普500等权重指数(QDII)A人民币",
+      "short_name": "大成标普500等权ETF联接A",
+      "category": "SP500",
+      "trackType": "equal_weight",
+      "fee_original": 1.5,
+      "fee_discount": 0.15,
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10
+    }
+  ],
+  "candidates": [
+    {
+      "code": "018043",
+      "name": "天弘纳斯达克100指数发起(QDII)A",
+      "short_name": "天弘纳斯达克100指数发起(QDII)A",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "company": "天弘基金",
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 100,
+      "fee_original": 1.0,
+      "fee_discount": 0.1,
+      "discovered_at": "2026-08-13",
+      "note": "自动发现候选，待人工确认后并入 funds"
+    },
+    {
+      "code": "160213",
+      "name": "国泰纳斯达克100指数",
+      "short_name": "国泰纳斯达克100指数",
+      "category": "NASDAQ100",
+      "trackType": "index",
+      "company": "国泰基金",
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 100,
+      "fee_original": 1.5,
+      "fee_discount": 0.15,
+      "discovered_at": "2026-08-13",
+      "note": "自动发现候选，待人工确认后并入 funds"
+    },
+    {
+      "code": "050025",
+      "name": "博时标普500ETF联接A",
+      "short_name": "博时标普500ETF联接A",
+      "category": "SP500",
+      "trackType": "index",
+      "company": "博时基金",
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 100,
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "discovered_at": "2026-08-13",
+      "note": "自动发现候选，待人工确认后并入 funds"
+    },
+    {
+      "code": "161125",
+      "name": "易方达标普500指数人民币A",
+      "short_name": "易方达标普500指数人民币A",
+      "category": "SP500",
+      "trackType": "index",
+      "company": "易方达基金",
+      "status": "open",
+      "min_subscribe": 10,
+      "limit_daily": 10,
+      "fee_original": 1.2,
+      "fee_discount": 0.12,
+      "discovered_at": "2026-08-13",
+      "note": "自动发现候选，待人工确认后并入 funds"
+    }
+  ]
+}

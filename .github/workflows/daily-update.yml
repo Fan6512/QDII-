@@ -1,0 +1,43 @@
+name: Update QDII fund limits
+
+on:
+  schedule:
+    # 01:00 UTC is 09:00 in China Standard Time (UTC+8), Monday through Friday.
+    - cron: "0 1 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Discover new candidate funds
+        run: python scripts/auto_discover.py
+
+      - name: Refresh approved fund limits
+        run: python scripts/update_funds.py
+
+      - name: Publish data to the website
+        env:
+          QDII_SITE_URL: ${{ secrets.QDII_SITE_URL }}
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+        run: python push_to_vercel.py --url "$QDII_SITE_URL" --key "$ADMIN_KEY" --json data/funds.json
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/funds.json
+          git diff --cached --quiet || git commit -m "chore: refresh QDII fund data"
+          git push
