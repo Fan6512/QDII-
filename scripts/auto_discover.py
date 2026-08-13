@@ -70,7 +70,18 @@ def search(keyword):
     return out
 
 
-def fetch_limit_and_fee(code):
+def subscription_status_from_page(html):
+    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"&nbsp;", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    if re.search(r"暂停(?:办理)?申购|暂停申购", text):
+        return "paused"
+    if re.search(r"暂停大额申购|限制大额申购|限额申购", text):
+        return "limited"
+    return None
+
+
+def fetch_limit_fee_and_page_status(code):
     try:
         t = _get(f"https://fundf10.eastmoney.com/jjfl_{code}.html",
                  ref="https://fundf10.eastmoney.com/")
@@ -88,9 +99,9 @@ def fetch_limit_and_fee(code):
             if fm:
                 fo = float(fm.group(1).rstrip("%"))
                 fd_ = float(fm.group(2).rstrip("%"))
-        return daily, fo, fd_
+        return daily, fo, fd_, subscription_status_from_page(t)
     except Exception:
-        return None, None, None
+        return None, None, None, None
 
 
 def is_offexchange_qdii(name, code):
@@ -145,7 +156,7 @@ def main():
             if code in seen:
                 # 同一基金多个份额命中，保留 A类/人民币 那一个
                 continue
-            daily, fo, fd_ = fetch_limit_and_fee(code)
+            daily, fo, fd_, page_status = fetch_limit_fee_and_page_status(code)
             track = "equal_weight" if "等权" in name else "index"
             cand = {
                 "code": code,
@@ -155,7 +166,7 @@ def main():
                 "trackType": track,
                 "company": r["company"],
                 # Missing or unfamiliar source values are not evidence of an open subscription.
-                "status": "open" if r["isbuy"] == "1" else ("paused" if r["isbuy"] == "0" else "unknown"),
+                "status": page_status or ("open" if r["isbuy"] == "1" else ("paused" if r["isbuy"] == "0" else "unknown")),
                 "min_subscribe": int(r["minsg"]) if r["minsg"] else None,
                 "limit_daily": daily,
                 "fee_original": fo,

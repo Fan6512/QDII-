@@ -27,7 +27,6 @@
   .grid{display:grid;gap:11px}
   .card{background:var(--card);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow);
     border:1.5px solid transparent;position:relative;overflow:hidden}
-  .card.eq{border-color:var(--eq)}
   .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
   .fname{font-size:15px;font-weight:650;line-height:1.35}
   .fcode{font-size:11.5px;color:var(--sub);margin-top:2px;letter-spacing:.5px}
@@ -46,6 +45,7 @@
   .tags{display:flex;gap:6px;align-items:center}
   .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
   .pill.open{background:#e9f9ef;color:var(--open)}
+  .pill.limited{background:#fff7ed;color:#b45309}
   .pill.paused{background:#fdeaea;color:var(--paused)}
   .pill.unknown{background:#fff7ed;color:#b45309}
   footer{margin-top:22px;font-size:11px;color:#9aa1ac;line-height:1.6;border-top:1px solid var(--line);padding-top:14px}
@@ -117,6 +117,7 @@ function render(){
     const lim = fmtLimit(f.limit_daily);
     const eq = f.trackType === "equal_weight";
     const status = f.status === "open" ? { cls:"open", label:"开放" }
+      : f.status === "limited" ? { cls:"limited", label:"限额申购" }
       : f.status === "paused" ? { cls:"paused", label:"暂停" }
       : { cls:"unknown", label:"待核验" };
     return `

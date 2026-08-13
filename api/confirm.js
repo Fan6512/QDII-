@@ -15,7 +15,16 @@ async function verifyStatus(code) {
   });
   if (!match) throw new Error("未能在数据源中核验该基金");
   const isBuy = String((match.FundBaseInfo || {}).ISBUY ?? "");
-  return isBuy === "1" ? "open" : isBuy === "0" ? "paused" : "unknown";
+  const searchStatus = isBuy === "1" ? "open" : isBuy === "0" ? "paused" : "unknown";
+  const pageResponse = await fetch(`https://fundf10.eastmoney.com/jjfl_${encodeURIComponent(code)}.html`, {
+    headers: { "user-agent": "QDII-Limit-Tracker/1.0" },
+  });
+  if (!pageResponse.ok) return searchStatus;
+  const page = await pageResponse.text();
+  const text = page.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ");
+  if (/暂停(?:办理)?申购|暂停申购/.test(text)) return "paused";
+  if (/暂停大额申购|限制大额申购|限额申购/.test(text)) return "limited";
+  return searchStatus;
 }
 
 export default async function handler(req) {
@@ -26,7 +35,13 @@ export default async function handler(req) {
   if (!body?.code || !["confirm", "ignore"].includes(body.action)) return Response.json({ ok: false, error: "action 仅支持 confirm/ignore，且必须提供 code" }, { status: 400 });
 
   const [candidate, existingReview] = await Promise.all([redis.hget("candidates", body.code), redis.hget("candidate-reviews", body.code)]);
-  if (!candidate || existingReview) return Response.json({ ok: false, error: `候选里没有 ${body.code}` }, { status: 404 });
+  if (!candidate || existingReview) {
+    const review = typeof existingReview === "string" ? JSON.parse(existingReview) : existingReview;
+    const message = review?.action === "approved" ? "该候选曾被审核，但加入未完成；请先执行一次数据同步后重试"
+      : review?.action === "rejected" ? "该候选已被忽略"
+      : `候选里没有 ${body.code}`;
+    return Response.json({ ok: false, error: message }, { status: 404 });
+  }
   const item = typeof candidate === "string" ? JSON.parse(candidate) : candidate;
   const review = body.action === "confirm" ? "approved" : "rejected";
   let verifiedStatus;

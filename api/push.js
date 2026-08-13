@@ -17,8 +17,17 @@ export default async function handler(req) {
   const candidates = (body.candidates || []).filter((candidate) => !officialCodes.has(candidate.code));
   // Upstash returns null for HMGET when the hash has not been created yet.
   const reviews = candidates.length ? (await redis.hmget("candidate-reviews", ...candidates.map((candidate) => candidate.code))) || [] : [];
-  const pending = candidates.filter((_, index) => !reviews[index]);
   const approved = await redis.hgetall("approved-funds");
+  // Older deployments recorded an approval before status verification completed.
+  // If no approved fund was written, reopen that stale review so the candidate
+  // returns to the queue instead of being permanently hidden.
+  const staleApprovals = candidates.filter((candidate, index) => {
+    const value = reviews[index];
+    const review = typeof value === "string" ? JSON.parse(value) : value;
+    return review?.action === "approved" && !approved?.[candidate.code];
+  });
+  const staleCodes = new Set(staleApprovals.map((candidate) => candidate.code));
+  const pending = candidates.filter((candidate, index) => !reviews[index] || staleCodes.has(candidate.code));
   const approvedUpdates = candidates.flatMap((candidate) => {
     const saved = approved?.[candidate.code];
     if (!saved) return [];
@@ -35,6 +44,7 @@ export default async function handler(req) {
   });
   await Promise.all([
     redis.set("funds-db", nextFunds),
+    ...staleApprovals.map((candidate) => redis.hdel("candidate-reviews", candidate.code)),
     ...pending.map((candidate) => redis.hset("candidates", { [candidate.code]: JSON.stringify({ ...candidate, review_status: "pending" }) })),
     ...approvedUpdates,
   ]);
