@@ -15,7 +15,8 @@ export default async function handler(req) {
   const nextFunds = syncFunds(currentFunds || { funds: [] }, body);
   const officialCodes = new Set(nextFunds.funds.map((fund) => fund.code));
   const candidates = (body.candidates || []).filter((candidate) => !officialCodes.has(candidate.code));
-  const reviews = candidates.length ? await redis.hmget("candidate-reviews", ...candidates.map((candidate) => candidate.code)) : [];
+  // Upstash returns null for HMGET when the hash has not been created yet.
+  const reviews = candidates.length ? (await redis.hmget("candidate-reviews", ...candidates.map((candidate) => candidate.code))) || [] : [];
   const pending = candidates.filter((_, index) => !reviews[index]);
   await Promise.all([
     redis.set("funds-db", nextFunds),
