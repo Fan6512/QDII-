@@ -57,7 +57,8 @@ def fetch_status_and_min(code):
     data = json.loads(_get(url))
     for d in data.get("Datas", []):
         fbi = d.get("FundBaseInfo") or {}
-        if fbi.get("CODE") == code:
+        result_code = str(fbi.get("CODE") or fbi.get("FCODE") or d.get("CODE") or "")
+        if result_code == code:
             isbuy = str(fbi.get("ISBUY", ""))
             minsg = fbi.get("MINSG")
             status = "open" if isbuy == "1" else ("paused" if isbuy == "0" else "unknown")
@@ -65,20 +66,8 @@ def fetch_status_and_min(code):
     return None, None
 
 
-def subscription_status_from_page(html):
-    """从费率页的产品状态文字补充搜索 API 的申购状态。"""
-    text = re.sub(r"<[^>]+>", " ", html)
-    text = re.sub(r"&nbsp;", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    if re.search(r"暂停(?:办理)?申购|暂停申购", text):
-        return "paused"
-    if re.search(r"暂停大额申购|限制大额申购|限额申购", text):
-        return "limited"
-    return None
-
-
-def fetch_limit_fee_and_page_status(code):
-    """从费率页取单日限额、费率及补充申购状态。"""
+def fetch_limit_and_fee(code):
+    """从费率页取单日限额与费率；申购状态只以搜索 API 为准。"""
     t = _get(f"https://fundf10.eastmoney.com/jjfl_{code}.html",
              ref="https://fundf10.eastmoney.com/")
     # 单日限购额度
@@ -99,7 +88,7 @@ def fetch_limit_fee_and_page_status(code):
         if fm:
             fee_orig = float(fm.group(1).rstrip("%"))
             fee_disc = float(fm.group(2).rstrip("%"))
-    return daily, fee_orig, fee_disc, subscription_status_from_page(t)
+    return daily, fee_orig, fee_disc
 
 
 def main():
@@ -117,7 +106,7 @@ def main():
         name = fd.get("short_name", code)
         try:
             status, minsub = fetch_status_and_min(code)
-            daily, fo, fd_, page_status = fetch_limit_fee_and_page_status(code)
+            daily, fo, fd_ = fetch_limit_and_fee(code)
         except Exception as e:
             warnings.append(f"{code} {name}: 抓取失败 {e}")
             report.append({"code": code, "name": name, "ok": False, "error": str(e)})
@@ -133,7 +122,7 @@ def main():
             "fee_discount": fd.get("fee_discount"),
         }
         fd["limit_daily"] = daily
-        fd["status"] = page_status or status or "unknown"
+        fd["status"] = status or "unknown"
         if minsub is not None:
             fd["min_subscribe"] = minsub
         if fo is not None:

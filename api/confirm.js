@@ -16,14 +16,6 @@ async function verifyStatus(code) {
   if (!match) throw new Error("未能在数据源中核验该基金");
   const isBuy = String((match.FundBaseInfo || {}).ISBUY ?? "");
   const searchStatus = isBuy === "1" ? "open" : isBuy === "0" ? "paused" : "unknown";
-  const pageResponse = await fetch(`https://fundf10.eastmoney.com/jjfl_${encodeURIComponent(code)}.html`, {
-    headers: { "user-agent": "QDII-Limit-Tracker/1.0" },
-  });
-  if (!pageResponse.ok) return searchStatus;
-  const page = await pageResponse.text();
-  const text = page.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ");
-  if (/暂停(?:办理)?申购|暂停申购/.test(text)) return "paused";
-  if (/暂停大额申购|限制大额申购|限额申购/.test(text)) return "limited";
   return searchStatus;
 }
 

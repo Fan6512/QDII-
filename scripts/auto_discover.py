@@ -70,18 +70,23 @@ def search(keyword):
     return out
 
 
-def subscription_status_from_page(html):
-    text = re.sub(r"<[^>]+>", " ", html)
-    text = re.sub(r"&nbsp;", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    if re.search(r"暂停(?:办理)?申购|暂停申购", text):
-        return "paused"
-    if re.search(r"暂停大额申购|限制大额申购|限额申购", text):
-        return "limited"
-    return None
+def fetch_status_and_min(code):
+    """按基金代码精确查询，避免关键词搜索返回没有状态字段的结果。"""
+    url = (f"https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx"
+           f"?m=1&key={urllib.parse.quote(code)}&_={int(time.time() * 1000)}")
+    data = json.loads(_get(url))
+    for item in data.get("Datas", []):
+        info = item.get("FundBaseInfo") or {}
+        result_code = str(info.get("CODE") or info.get("FCODE") or item.get("CODE") or "")
+        if result_code == code:
+            isbuy = str(info.get("ISBUY", ""))
+            status = "open" if isbuy == "1" else ("paused" if isbuy == "0" else "unknown")
+            minsg = info.get("MINSG")
+            return status, (int(minsg) if minsg not in (None, "", 0) else None)
+    return "unknown", None
 
 
-def fetch_limit_fee_and_page_status(code):
+def fetch_limit_and_fee(code):
     try:
         t = _get(f"https://fundf10.eastmoney.com/jjfl_{code}.html",
                  ref="https://fundf10.eastmoney.com/")
@@ -99,9 +104,9 @@ def fetch_limit_fee_and_page_status(code):
             if fm:
                 fo = float(fm.group(1).rstrip("%"))
                 fd_ = float(fm.group(2).rstrip("%"))
-        return daily, fo, fd_, subscription_status_from_page(t)
+        return daily, fo, fd_
     except Exception:
-        return None, None, None, None
+        return None, None, None
 
 
 def is_offexchange_qdii(name, code):
@@ -156,7 +161,8 @@ def main():
             if code in seen:
                 # 同一基金多个份额命中，保留 A类/人民币 那一个
                 continue
-            daily, fo, fd_, page_status = fetch_limit_fee_and_page_status(code)
+            status, min_subscribe = fetch_status_and_min(code)
+            daily, fo, fd_ = fetch_limit_and_fee(code)
             track = "equal_weight" if "等权" in name else "index"
             cand = {
                 "code": code,
@@ -166,8 +172,8 @@ def main():
                 "trackType": track,
                 "company": r["company"],
                 # Missing or unfamiliar source values are not evidence of an open subscription.
-                "status": page_status or ("open" if r["isbuy"] == "1" else ("paused" if r["isbuy"] == "0" else "unknown")),
-                "min_subscribe": int(r["minsg"]) if r["minsg"] else None,
+                "status": status,
+                "min_subscribe": min_subscribe,
                 "limit_daily": daily,
                 "fee_original": fo,
                 "fee_discount": fd_,
