@@ -110,8 +110,8 @@ def fetch_profile(code):
         match = re.search(label + r"[^\d]{0,30}([\d.]+)%", text)
         return _as_number(match.group(1)) if match else None
 
-    management = rate("基金管理费率")
-    custody = rate("基金托管费率")
+    management = rate("(?:基金)?管理费(?:率)?")
+    custody = rate("(?:基金)?托管费(?:率)?")
     scale = None
     scale_date = None
     scale_match = re.search(r"基金规模\s*([\d.]+)亿元[^\d]*(\d{4}-\d{2}-\d{2})", text)
@@ -143,17 +143,18 @@ def _months_before(day, months):
 
 
 def fetch_performance(code):
-    """以复权单位净值计算统一的 3/6/12/60 月区间收益率。"""
+    """以累计净值（含分红再投资影响）计算统一的 3/6/12/60 月收益率。"""
     text = _get(f"https://fund.eastmoney.com/pingzhongdata/{code}.js",
                 ref=f"https://fund.eastmoney.com/{code}.html")
-    match = re.search(r"var\s+Data_netWorthTrend\s*=\s*(\[.*?\]);", text, re.S)
+    match = re.search(r"var\s+Data_ACWorthTrend\s*=\s*(\[.*?\]);", text, re.S)
     if not match:
-        raise ValueError("未找到历史净值序列")
+        raise ValueError("未找到累计净值序列")
     rows = json.loads(match.group(1))
     series = []
     for row in rows:
-        nav = _as_number(row.get("y"))
-        stamp = row.get("x")
+        if not isinstance(row, list) or len(row) < 2:
+            continue
+        stamp, nav = row[0], _as_number(row[1])
         if nav is None or stamp is None:
             continue
         day = datetime.fromtimestamp(int(stamp) / 1000, tz=timezone.utc).date()
@@ -169,7 +170,11 @@ def fetch_performance(code):
         eligible = [item for item in series if item[0] <= target]
         if not eligible:
             return None
-        return round((latest_nav / eligible[-1][1] - 1) * 100, 2)
+        start_day, start_nav = eligible[-1]
+        # A missing history must not turn a one-year-old value into a "3-month" return.
+        if (target - start_day).days > 10 or start_nav <= 0:
+            return None
+        return round((latest_nav / start_nav - 1) * 100, 2)
 
     first_day, first_nav = series[0]
     years = (latest_day - first_day).days / 365.2425
