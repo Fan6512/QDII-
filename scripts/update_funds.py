@@ -3,9 +3,8 @@
 """
 场外 QDII 指数基金额度 - 自动更新脚本
 ================================================
-只刷新「动态字段」：limit_daily(单日限购) / status(申购状态) /
-min_subscribe(起购) / fee_original / fee_discount(费率)。
-保留「静态字段」：code / name / short_name / category / trackType。
+刷新申购状态、限额、申购费率，以及长期定投比较所需的成本、规模、存续和
+统一观察期收益率。抓取失败时保留上一份有效数据，避免错误地清空页面。
 
 数据源（已验证，2026-08-13）：
   - 申购状态/起购金额: 天天基金搜索 API (FundBaseInfo.ISBUY / MINSG)
@@ -25,7 +24,7 @@ import ssl
 import sys
 import time
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
 
 # ---------- 路径 ----------
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -91,6 +90,102 @@ def fetch_limit_and_fee(code):
     return daily, fee_orig, fee_disc
 
 
+def _as_number(value):
+    try:
+        return float(str(value).replace(",", "").replace("%", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _strip_html(value):
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", value)).strip()
+
+
+def fetch_profile(code):
+    """获取管理费、托管费、最新披露规模与成立日期。"""
+    text = _strip_html(_get(f"https://fundf10.eastmoney.com/jjxx_{code}.html",
+                            ref="https://fundf10.eastmoney.com/"))
+
+    def rate(label):
+        match = re.search(label + r"[^\d]{0,30}([\d.]+)%", text)
+        return _as_number(match.group(1)) if match else None
+
+    management = rate("基金管理费率")
+    custody = rate("基金托管费率")
+    scale = None
+    scale_date = None
+    scale_match = re.search(r"基金规模\s*([\d.]+)亿元[^\d]*(\d{4}-\d{2}-\d{2})", text)
+    if scale_match:
+        scale = _as_number(scale_match.group(1))
+        scale_date = scale_match.group(2)
+    inception_match = re.search(r"成立日期\s*(\d{4}-\d{2}-\d{2})", text)
+    return {
+        "management_fee": management,
+        "custody_fee": custody,
+        "fund_scale_billion": scale,
+        "fund_scale_date": scale_date,
+        "inception_date": inception_match.group(1) if inception_match else None,
+    }
+
+
+def _months_before(day, months):
+    year = day.year - (months // 12)
+    month = day.month - (months % 12)
+    if month <= 0:
+        year -= 1
+        month += 12
+    # Clamp to the last day of the target month without external dependencies.
+    for candidate in range(day.day, 0, -1):
+        try:
+            return date(year, month, candidate)
+        except ValueError:
+            pass
+
+
+def fetch_performance(code):
+    """以复权单位净值计算统一的 3/6/12/60 月区间收益率。"""
+    text = _get(f"https://fund.eastmoney.com/pingzhongdata/{code}.js",
+                ref=f"https://fund.eastmoney.com/{code}.html")
+    match = re.search(r"var\s+Data_netWorthTrend\s*=\s*(\[.*?\]);", text, re.S)
+    if not match:
+        raise ValueError("未找到历史净值序列")
+    rows = json.loads(match.group(1))
+    series = []
+    for row in rows:
+        nav = _as_number(row.get("y"))
+        stamp = row.get("x")
+        if nav is None or stamp is None:
+            continue
+        day = datetime.fromtimestamp(int(stamp) / 1000, tz=timezone.utc).date()
+        series.append((day, nav))
+    series.sort()
+    if len(series) < 2:
+        raise ValueError("历史净值不足")
+
+    latest_day, latest_nav = series[-1]
+
+    def return_for(months):
+        target = _months_before(latest_day, months)
+        eligible = [item for item in series if item[0] <= target]
+        if not eligible:
+            return None
+        return round((latest_nav / eligible[-1][1] - 1) * 100, 2)
+
+    first_day, first_nav = series[0]
+    years = (latest_day - first_day).days / 365.2425
+    annualized = None
+    if years >= 0.25 and first_nav > 0:
+        annualized = round(((latest_nav / first_nav) ** (1 / years) - 1) * 100, 2)
+    return {
+        "performance_as_of": latest_day.isoformat(),
+        "return_3m": return_for(3),
+        "return_6m": return_for(6),
+        "return_1y": return_for(12),
+        "return_5y": return_for(60),
+        "since_inception_annualized": annualized,
+    }
+
+
 def main():
     dry = "--dry-run" in sys.argv
     with open(FUNDS_JSON, encoding="utf-8") as f:
@@ -113,6 +208,19 @@ def main():
             time.sleep(0.3)
             continue
 
+        # Profile and NAV history are supplementary. Their intermittent failure must not
+        # stop the core daily quota/status refresh or overwrite prior valid values.
+        try:
+            profile = fetch_profile(code)
+        except Exception as e:
+            profile = {}
+            warnings.append(f"{code} {name}: 基金资料抓取失败，保留旧值 {e}")
+        try:
+            performance = fetch_performance(code)
+        except Exception as e:
+            performance = {}
+            warnings.append(f"{code} {name}: 历史净值抓取失败，保留旧值 {e}")
+
         # 保留静态字段，仅覆盖动态字段
         old = {
             "limit_daily": fd.get("limit_daily"),
@@ -120,6 +228,17 @@ def main():
             "min_subscribe": fd.get("min_subscribe"),
             "fee_original": fd.get("fee_original"),
             "fee_discount": fd.get("fee_discount"),
+            "management_fee": fd.get("management_fee"),
+            "custody_fee": fd.get("custody_fee"),
+            "fund_scale_billion": fd.get("fund_scale_billion"),
+            "fund_scale_date": fd.get("fund_scale_date"),
+            "inception_date": fd.get("inception_date"),
+            "performance_as_of": fd.get("performance_as_of"),
+            "return_3m": fd.get("return_3m"),
+            "return_6m": fd.get("return_6m"),
+            "return_1y": fd.get("return_1y"),
+            "return_5y": fd.get("return_5y"),
+            "since_inception_annualized": fd.get("since_inception_annualized"),
         }
         fd["limit_daily"] = daily
         fd["status"] = status or "unknown"
@@ -129,6 +248,10 @@ def main():
             fd["fee_original"] = fo
         if fd_ is not None:
             fd["fee_discount"] = fd_
+        for key, value in profile.items():
+            if value is not None:
+                fd[key] = value
+        fd.update(performance)
 
         new = {
             "limit_daily": fd["limit_daily"],
@@ -136,6 +259,17 @@ def main():
             "min_subscribe": fd["min_subscribe"],
             "fee_original": fd["fee_original"],
             "fee_discount": fd["fee_discount"],
+            "management_fee": fd.get("management_fee"),
+            "custody_fee": fd.get("custody_fee"),
+            "fund_scale_billion": fd.get("fund_scale_billion"),
+            "fund_scale_date": fd.get("fund_scale_date"),
+            "inception_date": fd.get("inception_date"),
+            "performance_as_of": fd.get("performance_as_of"),
+            "return_3m": fd.get("return_3m"),
+            "return_6m": fd.get("return_6m"),
+            "return_1y": fd.get("return_1y"),
+            "return_5y": fd.get("return_5y"),
+            "since_inception_annualized": fd.get("since_inception_annualized"),
         }
         if new != old:
             changed += 1
@@ -149,7 +283,7 @@ def main():
     data["_meta"]["last_auto_update"] = today
     data["_meta"]["update_method"] = (
         "脚本自动刷新(update_funds.py)：动态字段取自天天基金公开页面(搜索API FundBaseInfo + jjfl 费率页)，"
-        "静态字段(code/name/category/trackType)由人工维护"
+        "基金资料页与净值序列；分类字段(code/name/category/trackType)由人工维护"
     )
     # 修正字段口径说明里关于 limit_daily 的旧描述
     if "limit_daily" in data["_meta"].get("字段口径说明", {}):
@@ -157,6 +291,14 @@ def main():
             "单日申购上限（元），由脚本自动抓取自天天基金 jjfl 费率页「日累计申购限额」字段；"
             "为 None 表示该基金无单日上限限制"
         )
+    data["_meta"].setdefault("字段口径说明", {}).update({
+        "management_fee": "基金合同披露的年管理费率（%）",
+        "custody_fee": "基金合同披露的年托管费率（%）",
+        "fund_scale_billion": "基金资料页披露的最新基金规模（亿元），需结合披露日期阅读",
+        "inception_date": "基金成立日期",
+        "return_3m/return_6m/return_1y/return_5y": "按同一截至日的复权单位净值计算的区间收益率（%）；存续期不足对应期间则为空",
+        "since_inception_annualized": "按复权单位净值计算的成立以来年化收益率（%），仅作补充，不与固定观察期横向比较",
+    })
 
     if not dry:
         os.makedirs(BACKUP_DIR, exist_ok=True)

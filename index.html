@@ -41,6 +41,13 @@
   .quota .unit{font-size:13px;color:var(--sub);font-weight:600}
   .meta{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--sub)}
   .meta b{color:var(--ink);font-weight:600}
+  .detail{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .detail-title{font-size:11px;color:var(--sub);margin-bottom:6px}
+  .detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px 10px}
+  .detail-cell{min-width:0;font-size:11.5px;color:var(--sub)}
+  .detail-cell b{display:block;color:var(--ink);font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .performance{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .return-positive{color:var(--open)!important}.return-negative{color:var(--paused)!important}
   .right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
   .tags{display:flex;gap:6px;align-items:center}
   .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
@@ -60,7 +67,7 @@
     <h1>场外 QDII 指数基金 · 今日限买</h1>
     <div class="sub">
       <span class="dot"></span>
-      <span>只回答三件事：是不是纳指100/标普500 · 追踪还是等权 · 今天最多买多少</span>
+      <span>纳指100与标普500场外基金的限购、成本、规模与历史表现</span>
     </div>
     <div class="sub" style="margin-top:8px">
       <span class="badge-update" id="updTime">数据更新中…</span>
@@ -80,7 +87,7 @@
   </div>
 
   <footer>
-    <b>口径说明：</b>「今日限买」= 单日累计申购上限（元），取自代销平台展示值；「起购」= 单笔最低金额；「优惠费率」= 天天基金等代销平台实际费率（非原费率）。<br/>
+    <b>口径说明：</b>「今日限买」= 单日累计申购上限（元）；长期成本=管理费+托管费；区间收益率按复权单位净值、同一截至日计算，存续期不足则不展示。规模以其披露日期为准。<br/>
     <b>风险提示：</b>QDII 限购额度 / 暂停状态变动频繁，本页数据仅供参考，不构成投资建议。实际以基金公司 / 销售平台公告为准。
   </footer>
 </div>
@@ -98,6 +105,20 @@ const catLabel = c => c === "NASDAQ100" ? {t:"纳指100", cls:"nasdaq"}
 function fmtLimit(v){
   if (v === null || v === undefined) return {txt:"无上限", tiny:true};
   return {txt: v.toLocaleString("zh-CN"), tiny:false};
+}
+
+function pct(value){
+  return value === null || value === undefined ? "—" : `${Number(value).toFixed(2)}%`;
+}
+
+function returnClass(value){
+  return value === null || value === undefined ? "" : value < 0 ? "return-negative" : "return-positive";
+}
+
+function yearsSince(dateText){
+  if(!dateText) return "—";
+  const days = (Date.now() - new Date(`${dateText}T00:00:00`).getTime()) / 86400000;
+  return Number.isFinite(days) && days >= 0 ? `${(days / 365.2425).toFixed(1)}年` : "—";
 }
 
 function render(){
@@ -144,6 +165,27 @@ function render(){
         <span>起购 <b>¥${escapeHtml(f.min_subscribe ?? '-')}</b></span>
         <span>优惠费率 <b>${escapeHtml(f.fee_discount ?? '-')}%</b></span>
         <span>原费率 <b>${escapeHtml(f.fee_original ?? '-')}%</b></span>
+      </div>
+      <div class="detail">
+        <div class="detail-title">长期成本与存续</div>
+        <div class="detail-grid">
+          <div class="detail-cell">管理费 <b>${pct(f.management_fee)}</b></div>
+          <div class="detail-cell">托管费 <b>${pct(f.custody_fee)}</b></div>
+          <div class="detail-cell">合计年费 <b>${f.management_fee != null && f.custody_fee != null ? pct(Number(f.management_fee) + Number(f.custody_fee)) : "—"}</b></div>
+          <div class="detail-cell">基金规模 <b>${f.fund_scale_billion != null ? `${Number(f.fund_scale_billion).toFixed(2)}亿` : "—"}</b></div>
+          <div class="detail-cell">成立日期 <b>${escapeHtml(f.inception_date ?? "—")}</b></div>
+          <div class="detail-cell">存续 <b>${yearsSince(f.inception_date)}</b></div>
+        </div>
+      </div>
+      <div class="detail">
+        <div class="detail-title">历史表现${f.performance_as_of ? ` · 截至 ${escapeHtml(f.performance_as_of)}` : ""}</div>
+        <div class="detail-grid performance">
+          <div class="detail-cell">近3月 <b class="${returnClass(f.return_3m)}">${pct(f.return_3m)}</b></div>
+          <div class="detail-cell">近6月 <b class="${returnClass(f.return_6m)}">${pct(f.return_6m)}</b></div>
+          <div class="detail-cell">近1年 <b class="${returnClass(f.return_1y)}">${pct(f.return_1y)}</b></div>
+          <div class="detail-cell">近5年 <b class="${returnClass(f.return_5y)}">${pct(f.return_5y)}</b></div>
+          <div class="detail-cell">成立以来年化 <b class="${returnClass(f.since_inception_annualized)}">${pct(f.since_inception_annualized)}</b></div>
+        </div>
       </div>
     </div>`;
   }).join("");
