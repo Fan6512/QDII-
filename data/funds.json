@@ -2,7 +2,7 @@
   "_meta": {
     "title": "场外 QDII 指数基金额度 - 核对版基金池",
     "description": "用于 MVP 的基金清单，代码/费率/申购状态均经天天基金公开接口核对（非 LLM 臆造）。",
-    "generated_at": "2026-08-13",
+    "generated_at": "2026-08-14",
     "data_source": "天天基金（东方财富）公开接口",
     "extraction_method": {
       "基金代码/简称/申购状态/起购金额": "天天基金搜索 API https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx (FundBaseInfo.ISBUY=1 表示开放申购, MINSG 为起购金额)",
@@ -46,9 +46,9 @@
       "equal_weight": 1
     },
     "fields_updated_note": "limit_daily 已由脚本抓取自天天基金 jjfl 费率页的「日累计申购限额」字段(2026-08-13)，这是工具核心字段；min_subscribe 仍为起购门槛",
-    "last_auto_update": "2026-08-13",
+    "last_auto_update": "2026-08-14",
     "update_method": "脚本自动刷新(update_funds.py)：动态字段取自天天基金公开页面(搜索API FundBaseInfo + jjfl 费率页)，静态字段(code/name/category/trackType)由人工维护",
-    "last_discover_at": "2026-08-13",
+    "last_discover_at": "2026-08-14",
     "candidates_note": "顶层 candidates 数组由 auto_discover.py 自动发现、待人工确认后并入 funds。确认方式：在对话里让助手执行 merge_candidates.py 按代码合入，再重新部署，网页即更新。绝不自动加入 funds。"
   },
   "funds": [
@@ -222,7 +222,7 @@
       "limit_daily": 100,
       "fee_original": 1.0,
       "fee_discount": 0.1,
-      "discovered_at": "2026-08-13",
+      "discovered_at": "2026-08-14",
       "note": "自动发现候选，待人工确认后并入 funds"
     },
     {
@@ -237,7 +237,7 @@
       "limit_daily": 100,
       "fee_original": 1.5,
       "fee_discount": 0.15,
-      "discovered_at": "2026-08-13",
+      "discovered_at": "2026-08-14",
       "note": "自动发现候选，待人工确认后并入 funds"
     },
     {
@@ -252,7 +252,7 @@
       "limit_daily": 100,
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "discovered_at": "2026-08-13",
+      "discovered_at": "2026-08-14",
       "note": "自动发现候选，待人工确认后并入 funds"
     },
     {
@@ -267,7 +267,7 @@
       "limit_daily": 10,
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "discovered_at": "2026-08-13",
+      "discovered_at": "2026-08-14",
       "note": "自动发现候选，待人工确认后并入 funds"
     }
   ]
