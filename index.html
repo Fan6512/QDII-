@@ -86,7 +86,7 @@
     <div class="tab" data-cat="NASDAQ100">纳指100</div>
     <div class="tab" data-cat="SP500">标普500</div>
   </div>
-  <div class="sort" id="sortBtn">⇅ 按「今日限买」排序（小→大）</div>
+  <div class="sort" id="sortBtn">⇅ 按「今日限买」排序（大→小）</div>
   </div>
 
   <div class="grid" id="grid">
@@ -100,7 +100,7 @@
 </div>
 
 <script>
-let FUNDS = [], META = null, curCat = "all", sortAsc = true;
+let FUNDS = [], META = null, curCat = "all", sortAsc = false;
 
 function escapeHtml(value){
   return String(value ?? "").replace(/[&<>'\"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[char]));
