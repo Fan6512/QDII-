@@ -26,11 +26,19 @@ export default async function handler(req) {
   try { body = await req.json(); } catch { return Response.json({ ok: false, error: "请求体不是合法 JSON" }, { status: 400 }); }
   if (!body?.code || !["confirm", "ignore"].includes(body.action)) return Response.json({ ok: false, error: "action 仅支持 confirm/ignore，且必须提供 code" }, { status: 400 });
 
-  const [candidate, existingReview] = await Promise.all([redis.hget("candidates", body.code), redis.hget("candidate-reviews", body.code)]);
-  if (!candidate || existingReview) {
-    const review = typeof existingReview === "string" ? JSON.parse(existingReview) : existingReview;
-    const message = review?.action === "approved" ? "该候选曾被审核，但加入未完成；请先执行一次数据同步后重试"
-      : review?.action === "rejected" ? "该候选已被忽略"
+  const [candidate, existingReview, approvedFund] = await Promise.all([
+    redis.hget("candidates", body.code),
+    redis.hget("candidate-reviews", body.code),
+    redis.hget("approved-funds", body.code),
+  ]);
+  const previousReview = typeof existingReview === "string" ? JSON.parse(existingReview) : existingReview;
+  if (previousReview?.action === "approved" && !approvedFund && candidate) {
+    // Recover records left by older deployments that wrote the review before
+    // the status verification and approved-fund write had completed.
+    await redis.hdel("candidate-reviews", body.code);
+  } else if (!candidate || existingReview) {
+    const message = previousReview?.action === "approved" ? "该候选已加入清单"
+      : previousReview?.action === "rejected" ? "该候选已被忽略"
       : `候选里没有 ${body.code}`;
     return Response.json({ ok: false, error: message }, { status: 404 });
   }
