@@ -59,6 +59,7 @@
   footer b{color:var(--sub)}
   .loading,.err{padding:40px 0;text-align:center;color:var(--sub);font-size:14px}
   .err{color:var(--paused)}
+  .sticky-head{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:16px}
   @media(max-width:720px){
     .wrap{max-width:560px}
     .grid{grid-template-columns:1fr}
@@ -67,6 +68,7 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="sticky-head">
   <header>
     <h1>场外 QDII 指数基金 · 今日限买</h1>
     <div class="sub">
@@ -85,6 +87,7 @@
     <div class="tab" data-cat="SP500">标普500</div>
   </div>
   <div class="sort" id="sortBtn">⇅ 按「今日限买」排序（小→大）</div>
+  </div>
 
   <div class="grid" id="grid">
     <div class="loading">正在加载额度数据…</div>
