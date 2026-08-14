@@ -128,6 +128,11 @@ function yearsSince(dateText){
   return Number.isFinite(days) && days >= 0 ? `${(days / 365.2425).toFixed(1)}年` : "—";
 }
 
+function returnToTop(){
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({top:0, behavior: reduceMotion ? "auto" : "smooth"});
+}
+
 function render(){
   const list = FUNDS.filter(f => curCat === "all" || f.category === curCat);
   list.sort((a,b)=>{
@@ -224,12 +229,14 @@ document.getElementById("tabs").addEventListener("click", e=>{
   const t = e.target.closest(".tab"); if(!t) return;
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   t.classList.add("active"); curCat = t.dataset.cat; render();
+  returnToTop();
 });
 document.getElementById("sortBtn").addEventListener("click", ()=>{
   sortAsc = !sortAsc;
   document.getElementById("sortBtn").textContent =
     "⇅ 按「今日限买」排序（" + (sortAsc?"小→大":"大→小") + "）";
   render();
+  returnToTop();
 });
 
 load();
