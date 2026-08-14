@@ -16,6 +16,7 @@
 
 import json
 import os
+import random
 import re
 import ssl
 import sys
@@ -36,16 +37,16 @@ KEYWORDS = {
 }
 
 
-def _get(url, ref="https://fund.eastmoney.com/", attempts=3):
+def _get(url, ref="https://fund.eastmoney.com/", attempts=4, timeout=20):
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Referer": ref})
     last_error = None
     for attempt in range(attempts):
         try:
-            return urllib.request.urlopen(req, timeout=20, context=CTX).read().decode("utf-8", "ignore")
+            return urllib.request.urlopen(req, timeout=timeout, context=CTX).read().decode("utf-8", "ignore")
         except (urllib.error.URLError, TimeoutError, ssl.SSLError) as error:
             last_error = error
             if attempt + 1 < attempts:
-                time.sleep(1.5 * (2 ** attempt))
+                time.sleep((1.5 * (2 ** attempt)) + random.uniform(0.2, 0.8))
     raise last_error
 
 

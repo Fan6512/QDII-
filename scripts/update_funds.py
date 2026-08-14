@@ -6,10 +6,15 @@
 刷新申购状态、限额、申购费率，以及长期定投比较所需的成本、规模、存续和
 统一观察期收益率。抓取失败时保留上一份有效数据，避免错误地清空页面。
 
-数据源（已验证，2026-08-13）：
+数据源（已验证，2026-08-14）：
   - 申购状态/起购金额: 天天基金搜索 API (FundBaseInfo.ISBUY / MINSG)
   - 单日限购额度/费率: 天天基金费率页 jjfl_{code}.html -> 「日累计申购限额」「申购费率」
-  - 仅用标准库，无第三方依赖。
+  - 管理费/托管费/规模/成立日期: 天天基金基金概况页 jbgk_{code}.html
+      （原 jjxx_{code}.html 已 404 下线，2026-08 迁移至 jbgk）
+  - 历史净值/业绩: 天天基金 pingzhongdata_{code}.js (Data_ACWorthTrend 累计净值)
+  - 兜底: 当上述东财字段缺失时，可选 AkShare(fund_individual_basic_info_xq /
+    fund_fee_em / fund_open_fund_info_em) 补缺；未安装 akshare 则自动跳过，不影响运行
+  - 默认仅用标准库（无第三方依赖即可运行）。
 
 用法:
   python update_funds.py          # 更新 data/funds.json
@@ -19,12 +24,23 @@
 import json
 import os
 import re
+import random
 import shutil
 import ssl
 import sys
 import time
 import urllib.request
 from datetime import date, datetime, timezone
+
+# ---------- 可选：AkShare 兜底数据源 ----------
+# 仅作为主源（天天基金标准库抓取）缺字段时的补缺后端。未安装 akshare 时自动跳过，
+# 因此部署在 Vercel 等无依赖环境仍可正常运行。本地/CI 如需兜底，执行：pip install akshare
+try:
+    import akshare as ak
+    AKSHARE_AVAILABLE = True
+except ImportError:
+    ak = None
+    AKSHARE_AVAILABLE = False
 
 # ---------- 路径 ----------
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,23 +53,23 @@ CTX = ssl.create_default_context()
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
 
 
-def _get(url, ref="https://fund.eastmoney.com/", attempts=3):
+def _get(url, ref="https://fund.eastmoney.com/", attempts=3, timeout=20):
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Referer": ref})
     last_error = None
     for attempt in range(attempts):
         try:
-            return urllib.request.urlopen(req, timeout=20, context=CTX).read().decode("utf-8", "ignore")
+            return urllib.request.urlopen(req, timeout=timeout, context=CTX).read().decode("utf-8", "ignore")
         except (urllib.error.URLError, TimeoutError, ssl.SSLError) as error:
             last_error = error
             if attempt + 1 < attempts:
-                time.sleep(1.5 * (2 ** attempt))
+                time.sleep((1.5 * (2 ** attempt)) + random.uniform(0.2, 0.8))
     raise last_error
 
 
 def fetch_status_and_min(code):
     """从搜索 API 取 ISBUY(申购状态) 与 MINSG(起购金额)。"""
     url = f"https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key={code}&_={int(time.time() * 1000)}"
-    data = json.loads(_get(url))
+    data = json.loads(_get(url, attempts=5))
     for d in data.get("Datas", []):
         fbi = d.get("FundBaseInfo") or {}
         result_code = str(fbi.get("CODE") or fbi.get("FCODE") or d.get("CODE") or "")
@@ -68,7 +84,7 @@ def fetch_status_and_min(code):
 def fetch_limit_and_fee(code):
     """从费率页取单日限额与费率；申购状态只以搜索 API 为准。"""
     t = _get(f"https://fundf10.eastmoney.com/jjfl_{code}.html",
-             ref="https://fundf10.eastmoney.com/")
+             ref="https://fundf10.eastmoney.com/", attempts=4)
     # 单日限购额度
     m = re.search(r"日累计申购限额\s*([\d,]+(?:\.\d+)?)\s*元", t)
     if not m:
@@ -102,29 +118,52 @@ def _strip_html(value):
 
 
 def fetch_profile(code):
-    """获取管理费、托管费、最新披露规模与成立日期。"""
-    text = _strip_html(_get(f"https://fundf10.eastmoney.com/jjxx_{code}.html",
-                            ref="https://fundf10.eastmoney.com/"))
+    """获取管理费、托管费、最新披露规模与成立日期（基金概况页 jbgk）。
+
+    旧接口 jjxx_{code}.html 已于 2026 年前后下线（返回 404），现改用
+    jbgk_{code}.html（基金概况）。该页字段写法为：
+      - 管理费率 0.50%（每年）/ 托管费率 0.10%（每年）
+      - 净资产规模：29.69亿元（截止至：2026-06-30）
+      - 成立日期：2023-09-25（部分表格区写作「成立日期/规模 2023年09月25日」）
+    """
+    html = _get(f"https://fundf10.eastmoney.com/jbgk_{code}.html",
+                ref="https://fundf10.eastmoney.com/", attempts=3)
+    text = _strip_html(html)
 
     def rate(label):
         match = re.search(label + r"[^\d]{0,30}([\d.]+)%", text)
         return _as_number(match.group(1)) if match else None
 
-    management = rate("(?:基金)?管理费(?:率)?")
-    custody = rate("(?:基金)?托管费(?:率)?")
-    scale = None
-    scale_date = None
-    scale_match = re.search(r"基金规模\s*([\d.]+)亿元[^\d]*(\d{4}-\d{2}-\d{2})", text)
+    management = rate("(?:基金)?管理费率?")
+    custody = rate("(?:基金)?托管费率?")
+
+    # 规模：净资产规模 29.69亿元（截止至：2026-06-30）
+    scale = scale_date = None
+    scale_match = re.search(
+        r"(?:净资产|基金)规模[^\d]{0,15}([\d.]+)\s*亿元[^\d]{0,30}"
+        r"(\d{4}[-/年]\d{2}[-/月]\d{2})", text)
     if scale_match:
         scale = _as_number(scale_match.group(1))
-        scale_date = scale_match.group(2)
-    inception_match = re.search(r"成立日期\s*(\d{4}-\d{2}-\d{2})", text)
+        scale_date = (scale_match.group(2)
+                      .replace("年", "-").replace("月", "-")
+                      .replace("日", "").replace("/", "-"))
+
+    # 成立日期：2023-09-25  OR  成立日期/规模 2023年09月25日
+    inception = None
+    inception_match = re.search(r"成立日期[：:\s]{0,4}(\d{4}-\d{2}-\d{2})", text)
+    if inception_match:
+        inception = inception_match.group(1)
+    else:
+        inception_match = re.search(
+            r"成立日期/规模[^\d]{0,8}(\d{4})年(\d{2})月(\d{2})日", text)
+        if inception_match:
+            inception = f"{inception_match.group(1)}-{inception_match.group(2)}-{inception_match.group(3)}"
     return {
         "management_fee": management,
         "custody_fee": custody,
         "fund_scale_billion": scale,
         "fund_scale_date": scale_date,
-        "inception_date": inception_match.group(1) if inception_match else None,
+        "inception_date": inception,
     }
 
 
@@ -142,27 +181,14 @@ def _months_before(day, months):
             pass
 
 
-def fetch_performance(code):
-    """以累计净值（含分红再投资影响）计算统一的 3/6/12/60 月收益率。"""
-    text = _get(f"https://fund.eastmoney.com/pingzhongdata/{code}.js",
-                ref=f"https://fund.eastmoney.com/{code}.html")
-    match = re.search(r"var\s+Data_ACWorthTrend\s*=\s*(\[.*?\]);", text, re.S)
-    if not match:
-        raise ValueError("未找到累计净值序列")
-    rows = json.loads(match.group(1))
-    series = []
-    for row in rows:
-        if not isinstance(row, list) or len(row) < 2:
-            continue
-        stamp, nav = row[0], _as_number(row[1])
-        if nav is None or stamp is None:
-            continue
-        day = datetime.fromtimestamp(int(stamp) / 1000, tz=timezone.utc).date()
-        series.append((day, nav))
-    series.sort()
+def _compute_returns(series):
+    """由已排序的 [(date, 累计净值), ...] 计算统一的 3/6/12/60 月收益率与年化。
+
+    同时被 fetch_performance（东财 pingzhongdata）与 AkShare 兜底路径复用。
+    """
     if len(series) < 2:
         raise ValueError("历史净值不足")
-
+    series = sorted(series)
     latest_day, latest_nav = series[-1]
 
     def return_for(months):
@@ -189,6 +215,78 @@ def fetch_performance(code):
         "return_5y": return_for(60),
         "since_inception_annualized": annualized,
     }
+
+
+def fetch_performance(code):
+    """以累计净值（含分红再投资影响）计算统一的 3/6/12/60 月收益率（东财主源）。"""
+    text = _get(f"https://fund.eastmoney.com/pingzhongdata/{code}.js",
+                ref=f"https://fund.eastmoney.com/{code}.html", attempts=3)
+    match = re.search(r"var\s+Data_ACWorthTrend\s*=\s*(\[.*?\]);", text, re.S)
+    if not match:
+        raise ValueError("未找到累计净值序列")
+    rows = json.loads(match.group(1))
+    series = []
+    for row in rows:
+        if not isinstance(row, list) or len(row) < 2:
+            continue
+        stamp, nav = row[0], _as_number(row[1])
+        if nav is None or stamp is None:
+            continue
+        day = datetime.fromtimestamp(int(stamp) / 1000, tz=timezone.utc).date()
+        series.append((day, nav))
+    return _compute_returns(series)
+
+
+# ---------- AkShare 兜底（仅在主源缺字段时调用） ----------
+def _profile_from_akshare(code):
+    """用 AkShare 补缺：成立日期、规模、管理费、托管费。"""
+    out = {}
+    if not AKSHARE_AVAILABLE:
+        return out
+    # 基本资料：成立时间 + 最新规模
+    try:
+        df = ak.fund_individual_basic_info_xq(symbol=code)
+        mp = dict(zip(df["item"], df["value"]))
+        if str(mp.get("成立时间", "nan")) not in ("", "nan", "None"):
+            out["inception_date"] = str(mp["成立时间"]).strip()
+        if str(mp.get("最新规模", "nan")) not in ("", "nan", "None"):
+            val = _as_number(str(mp["最新规模"]).replace("亿", ""))
+            if val is not None:
+                out["fund_scale_billion"] = val
+    except Exception:
+        pass
+    # 费率：管理费 / 托管费（indicator 须为「运作费用」，其它取值多返回空）
+    try:
+        fee = ak.fund_fee_em(symbol=code, indicator="运作费用")
+        if not fee.empty:
+            row = fee.iloc[0]
+            for i in range(0, len(row) - 1, 2):
+                label = str(row[i])
+                val = _as_number(str(row[i + 1]).replace("（每年）", ""))
+                if label.startswith("管理费") and val is not None:
+                    out["management_fee"] = val
+                elif label.startswith("托管费") and val is not None:
+                    out["custody_fee"] = val
+    except Exception:
+        pass
+    return out
+
+
+def _performance_from_akshare(code):
+    """用 AkShare 累计净值序列补缺业绩（复用 _compute_returns）。"""
+    if not AKSHARE_AVAILABLE:
+        return {}
+    df = ak.fund_open_fund_info_em(symbol=code, indicator="累计净值走势", period="成立来")
+    series = []
+    for _, r in df.iterrows():
+        try:
+            d = datetime.strptime(str(r["净值日期"]).strip(), "%Y-%m-%d").date()
+        except Exception:
+            continue
+        nav = _as_number(r["累计净值"])
+        if d and nav:
+            series.append((d, nav))
+    return _compute_returns(series)
 
 
 def main():
@@ -219,12 +317,44 @@ def main():
             profile = fetch_profile(code)
         except Exception as e:
             profile = {}
-            warnings.append(f"{code} {name}: 基金资料抓取失败，保留旧值 {e}")
+            warn = f"{code} {name}: 基金资料(东财)抓取失败，保留旧值 {e}"
+            if AKSHARE_AVAILABLE:
+                try:
+                    profile = _profile_from_akshare(code)
+                    if profile:
+                        warn += "；已用 AkShare 补缺"
+                except Exception as e2:
+                    warn += f"；AkShare 补缺也失败 {e2}"
+            warnings.append(warn)
+        else:
+            # 主源成功但个别字段为空时，用 AkShare 补缺（限管理费/托管费/成立日/规模）
+            if AKSHARE_AVAILABLE:
+                missing = [k for k in ("management_fee", "custody_fee",
+                                       "inception_date", "fund_scale_billion")
+                           if profile.get(k) is None]
+                if missing:
+                    try:
+                        filled = {k: v for k, v in _profile_from_akshare(code).items()
+                                  if k in missing and v is not None}
+                        if filled:
+                            profile.update(filled)
+                            warnings.append(
+                                f"{code} {name}: AkShare 补缺字段 {list(filled)}")
+                    except Exception:
+                        pass
+
         try:
             performance = fetch_performance(code)
         except Exception as e:
             performance = {}
-            warnings.append(f"{code} {name}: 历史净值抓取失败，保留旧值 {e}")
+            warn = f"{code} {name}: 历史净值(东财)抓取失败，保留旧值 {e}"
+            if AKSHARE_AVAILABLE:
+                try:
+                    performance = _performance_from_akshare(code)
+                    warn += "；已用 AkShare 补缺"
+                except Exception as e2:
+                    warn += f"；AkShare 补缺也失败 {e2}"
+            warnings.append(warn)
 
         # 保留静态字段，仅覆盖动态字段
         old = {
