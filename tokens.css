@@ -1,0 +1,80 @@
+/* =========================================================================
+   QDII · Design Tokens
+   单一事实源（single source of truth）。数值取自 DESIGN-apple.md 的设计系统，
+   并按「功能型数据工具」语境做了适配：
+     - 交互控件统一 Action Blue（唯一强调色，不可妥协）
+     - 涨跌 / 申购状态保留语义红绿（同 Apple Stocks），不属于「装饰色」
+     - 类别标签降级为中性灰 chip，去掉无关的紫 / 橙装饰
+     - 阴影只留给产品图；卡片用发丝线 + 极轻表面色差分层的 Apple 做法
+     - 字体纪律：标题 600 + 负向 tracking；正文紧凑（工具语境，不强行 17px）
+   ========================================================================= */
+
+:root {
+  /* ---- 字体 ---- */
+  --font: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont,
+          "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+
+  /* ---- 浅色表面 ---- */
+  --canvas: #ffffff;
+  --canvas-parchment: #f5f5f7;   /* 页面默认底，Apple 招牌米白 */
+  --surface-pearl: #fafafc;
+  --surface-chip: rgba(210, 210, 215, 0.45);   /* 中性标签 / chip */
+
+  /* ---- 墨色 / 文本 ---- */
+  --ink: #1d1d1f;        /* 标题、正文（近黑，不用纯黑） */
+  --ink-2: #333333;      /* Pearl 按钮上的柔和墨色 */
+  --ink-3: #6e6e73;      /* 次级文本 */
+  --ink-4: #7a7a7a;      /* 禁用 / 法律小字 */
+
+  /* ---- 发丝线 ---- */
+  --hairline: #d2d2d7;
+  --hairline-soft: rgba(0, 0, 0, 0.04);
+
+  /* ---- 唯一交互强调色：Action Blue ---- */
+  --accent: #0066cc;
+  --accent-focus: #0071e3;
+  --accent-on-dark: #2997ff;   /* 暗面上的链接 / 强调蓝 */
+
+  /* ---- 金融语义色（仅用于涨跌 / 状态，非装饰）---- */
+  --gain: #248a3d;
+  --loss: #c93434;
+  --warn: #b45309;
+  --gain-bg: #e9f9ef;
+  --loss-bg: #fdeaea;
+  --warn-bg: #fff7ed;
+
+  /* ---- 暗色 tile 调色板（对齐 DESIGN-apple.md dark-tile）---- */
+  --tile-1: #272729;     /* 主暗面 */
+  --tile-2: #2a2a2c;     /* 微亮一档 */
+  --tile-3: #252527;     /* 微暗一档 */
+  --on-dark: #ffffff;
+  --on-dark-2: #c7c7cc;  /* 暗面次级文本 */
+  --on-dark-3: #8e8e93;  /* 暗面三级文本 */
+  --hairline-dark: #3a3a3c;
+  --gain-dark: #30d158;  /* Apple 暗色系统绿 */
+  --loss-dark: #ff453a;  /* Apple 暗色系统红 */
+  --warn-dark: #ffd60a;  /* Apple 暗色系统琥珀 */
+  --gain-bg-dark: #10241a;
+  --loss-bg-dark: #2a1416;
+  --warn-bg-dark: #2a1d0b;
+
+  /* ---- 圆角 ---- */
+  --r-xs: 5px;
+  --r-sm: 8px;
+  --r-md: 11px;
+  --r-lg: 18px;   /* 工具卡片 / 面板 */
+  --r-pill: 9999px;
+
+  /* ---- 间距（8px 基准）---- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 17px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 80px;
+
+  /* ---- 动效 ---- */
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);  /* Apple 风格缓动 */
+  --press: scale(0.95);                          /* 系统级按压反馈 */
+}
+
+/* 减弱透明度偏好：把半透明 chip 调实，去掉模糊 */
+@media (prefers-reduced-transparency: reduce) {
+  :root { --surface-chip: rgba(210, 210, 215, 0.9); }
+}
