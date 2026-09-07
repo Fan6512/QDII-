@@ -418,8 +418,16 @@ def main():
         time.sleep(0.3)  # 礼貌限速
 
     today = date.today().isoformat()
-    data["_meta"]["generated_at"] = today
-    data["_meta"]["last_auto_update"] = today
+    core_failures = len(funds) - sum(1 for item in report if item["ok"])
+    data["_meta"]["last_update_attempt"] = today
+    if core_failures == 0:
+        data["_meta"]["generated_at"] = today
+        data["_meta"]["last_auto_update"] = today
+        data["_meta"]["last_update_status"] = "success"
+    else:
+        # The displayed freshness date must mean a complete core refresh, not
+        # merely that this script ran while retaining stale values.
+        data["_meta"]["last_update_status"] = "partial_failure"
     data["_meta"]["update_method"] = (
         "脚本自动刷新(update_funds.py)：动态字段取自天天基金公开页面(搜索API FundBaseInfo + jjfl 费率页)，"
         "基金资料页与净值序列；分类字段(code/name/category/trackType)由人工维护"
