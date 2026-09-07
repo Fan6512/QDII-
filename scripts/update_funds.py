@@ -76,7 +76,8 @@ def fetch_status_and_min(code):
         if result_code == code:
             isbuy = str(fbi.get("ISBUY", ""))
             minsg = fbi.get("MINSG")
-            status = "open" if isbuy == "1" else ("paused" if isbuy == "0" else "unknown")
+            # ISBUY: 1=开放申购, 0=暂停申购, 4=限制大额申购；其余值视为未知（上层保留旧值）
+            status = {"1": "open", "0": "paused", "4": "limited"}.get(isbuy)
             return status, (int(minsg) if minsg not in (None, "", 0) else None)
     return None, None
 
@@ -376,7 +377,10 @@ def main():
             "since_inception_annualized": fd.get("since_inception_annualized"),
         }
         fd["limit_daily"] = daily
-        fd["status"] = status or "unknown"
+        # 仅当抓取到明确状态时才覆盖，抓取失败（None）时保留上一份有效值，
+        # 避免把"开放/暂停"错误地清成 unknown。
+        if status in ("open", "paused", "limited"):
+            fd["status"] = status
         if minsub is not None:
             fd["min_subscribe"] = minsub
         if fo is not None:

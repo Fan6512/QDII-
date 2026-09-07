@@ -81,7 +81,8 @@ def fetch_status_and_min(code):
         result_code = str(info.get("CODE") or info.get("FCODE") or item.get("CODE") or "")
         if result_code == code:
             isbuy = str(info.get("ISBUY", ""))
-            status = "open" if isbuy == "1" else ("paused" if isbuy == "0" else "unknown")
+            # ISBUY: 1=开放申购, 0=暂停申购, 4=限制大额申购
+            status = {"1": "open", "0": "paused", "4": "limited"}.get(isbuy, "unknown")
             minsg = info.get("MINSG")
             return status, (int(minsg) if minsg not in (None, "", 0) else None)
     return "unknown", None

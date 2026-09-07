@@ -15,7 +15,8 @@ async function verifyStatus(code) {
   });
   if (!match) throw new Error("未能在数据源中核验该基金");
   const isBuy = String((match.FundBaseInfo || {}).ISBUY ?? "");
-  const searchStatus = isBuy === "1" ? "open" : isBuy === "0" ? "paused" : "unknown";
+  // ISBUY: 1=开放申购, 0=暂停申购, 4=限制大额申购
+  const searchStatus = isBuy === "1" ? "open" : isBuy === "0" ? "paused" : isBuy === "4" ? "limited" : "unknown";
   return searchStatus;
 }
 
