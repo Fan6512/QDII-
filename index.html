@@ -195,7 +195,6 @@ function render(){
           <div class="detail-cell">近5年 <b class="${returnClass(f.return_5y)}">${pct(f.return_5y)}</b></div>
           <div class="detail-cell">成立以来年化 <b class="${returnClass(f.since_inception_annualized)}">${pct(f.since_inception_annualized)}</b></div>
           <div class="detail-cell">年化跟踪误差 <b>${pct(f.tracking_error_annualized)}</b></div>
-          <div class="detail-cell">误差截至 <b>${escapeHtml(f.tracking_error_as_of ?? "—")}</b></div>
         </div>
       </div>
     </div>`;
