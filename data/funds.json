@@ -74,12 +74,12 @@
       "fund_scale_billion": 29.69,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-09-25",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -3.68,
-      "return_6m": 16.03,
-      "return_1y": 19.01,
+      "performance_as_of": "2026-09-03",
+      "return_3m": -3.08,
+      "return_6m": 14.54,
+      "return_1y": 18.27,
       "return_5y": null,
-      "since_inception_annualized": 21.01
+      "since_inception_annualized": 21.07
     },
     {
       "code": "019547",
@@ -97,12 +97,12 @@
       "fund_scale_billion": 21.78,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-11-29",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -3.58,
-      "return_6m": 16.26,
-      "return_1y": 18.65,
+      "performance_as_of": "2026-09-03",
+      "return_3m": -2.97,
+      "return_6m": 14.84,
+      "return_1y": 17.91,
       "return_5y": null,
-      "since_inception_annualized": 17.83
+      "since_inception_annualized": 17.89
     },
     {
       "code": "019524",
@@ -120,12 +120,12 @@
       "fund_scale_billion": 8.16,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-10-19",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -3.86,
-      "return_6m": 16.08,
-      "return_1y": 17.78,
+      "performance_as_of": "2026-09-03",
+      "return_3m": -3.25,
+      "return_6m": 14.61,
+      "return_1y": 17.04,
       "return_5y": null,
-      "since_inception_annualized": 18.99
+      "since_inception_annualized": 19.04
     },
     {
       "code": "040046",
@@ -143,12 +143,12 @@
       "fund_scale_billion": 58.1,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2013-08-02",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -4.74,
-      "return_6m": 16.15,
-      "return_1y": 18.54,
-      "return_5y": 80.28,
-      "since_inception_annualized": 17.43
+      "performance_as_of": "2026-09-03",
+      "return_3m": -4.12,
+      "return_6m": 14.56,
+      "return_1y": 17.71,
+      "return_5y": 80.57,
+      "since_inception_annualized": 17.44
     },
     {
       "code": "016452",
@@ -166,12 +166,12 @@
       "fund_scale_billion": 62.1,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2022-11-29",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -4.04,
-      "return_6m": 16.09,
-      "return_1y": 18.34,
+      "performance_as_of": "2026-09-03",
+      "return_3m": -3.44,
+      "return_6m": 14.59,
+      "return_1y": 17.61,
       "return_5y": null,
-      "since_inception_annualized": 24.63
+      "since_inception_annualized": 24.67
     },
     {
       "code": "019441",
@@ -179,7 +179,7 @@
       "short_name": "万家纳斯达克100指数发起A",
       "category": "NASDAQ100",
       "trackType": "index",
-      "fee_original": 1,
+      "fee_original": 1.0,
       "fee_discount": 0.1,
       "status": "open",
       "min_subscribe": 10,
@@ -258,12 +258,12 @@
       "fund_scale_billion": 48.87,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2014-11-13",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -4.56,
-      "return_6m": 15.37,
-      "return_1y": 18.16,
-      "return_5y": 81.52,
-      "since_inception_annualized": 16.87
+      "performance_as_of": "2026-09-03",
+      "return_3m": -3.96,
+      "return_6m": 13.78,
+      "return_1y": 17.32,
+      "return_5y": 81.78,
+      "since_inception_annualized": 16.88
     },
     {
       "code": "018966",
@@ -281,10 +281,10 @@
       "fund_scale_billion": 16.33,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-08-02",
-      "performance_as_of": "2026-09-02",
-      "return_3m": -4.17,
-      "return_6m": 15.04,
-      "return_1y": 16.77,
+      "performance_as_of": "2026-09-03",
+      "return_3m": -3.68,
+      "return_6m": 13.4,
+      "return_1y": 15.87,
       "return_5y": null,
       "since_inception_annualized": 17.43
     },
@@ -327,12 +327,12 @@
       "fund_scale_billion": 53.03,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-04-06",
-      "performance_as_of": "2026-09-02",
-      "return_3m": 2.03,
-      "return_6m": 11.79,
-      "return_1y": 14.43,
+      "performance_as_of": "2026-09-03",
+      "return_3m": 1.29,
+      "return_6m": 10.53,
+      "return_1y": 13.22,
       "return_5y": null,
-      "since_inception_annualized": 17.26
+      "since_inception_annualized": 17.12
     },
     {
       "code": "096001",
@@ -345,17 +345,17 @@
       "status": "open",
       "min_subscribe": 10,
       "limit_daily": 10,
-      "management_fee": 1,
+      "management_fee": 1.0,
       "custody_fee": 0.2,
       "fund_scale_billion": 7.3,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2011-03-23",
-      "performance_as_of": "2026-09-02",
-      "return_3m": 3.7,
-      "return_6m": 5.36,
-      "return_1y": 9.61,
-      "return_5y": 36.56,
-      "since_inception_annualized": 8.57
+      "performance_as_of": "2026-09-03",
+      "return_3m": 2.69,
+      "return_6m": 4.59,
+      "return_1y": 8.65,
+      "return_5y": 36.04,
+      "since_inception_annualized": 8.54
     }
   ],
   "candidates": [
@@ -369,7 +369,7 @@
       "status": "open",
       "min_subscribe": 10,
       "limit_daily": 100,
-      "fee_original": 1,
+      "fee_original": 1.0,
       "fee_discount": 0.1,
       "discovered_at": "2026-09-07",
       "note": "自动发现候选，待人工确认后并入 funds"
