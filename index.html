@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>场外 QDII 指数基金 · 今日限买额度</title>
 <link rel="stylesheet" href="tokens.css" />
+<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html{-webkit-text-size-adjust:100%}
@@ -162,7 +163,7 @@ function render(){
     const lim = fmtLimit(f.limit_daily);
     const eq = f.trackType === "equal_weight";
     const status = f.status === "open" ? { cls:"open", label:"开放" }
-      : f.status === "limited" ? { cls:"limited", label:"限额申购" }
+      : f.status === "limited" ? { cls:"limited", label:"���额申购" }
       : f.status === "paused" ? { cls:"paused", label:"暂停" }
       : { cls:"unknown", label:"待核验" };
     return `
