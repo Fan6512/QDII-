@@ -24,6 +24,8 @@ import time
 import urllib.request
 from datetime import date
 
+from update_funds import fetch_performance, fetch_profile
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(os.path.dirname(HERE), "data")
 FUNDS_JSON = os.path.join(DATA_DIR, "funds.json")
@@ -165,6 +167,16 @@ def main():
                 continue
             status, min_subscribe = fetch_status_and_min(code)
             daily, fo, fd_ = fetch_limit_and_fee(code)
+            # Candidate cards use the same supplementary fields as approved funds.
+            # A temporary failure must not hide an otherwise valid candidate.
+            try:
+                profile = fetch_profile(code)
+            except Exception:
+                profile = {}
+            try:
+                performance = fetch_performance(code)
+            except Exception:
+                performance = {}
             track = "equal_weight" if "等权" in name else "index"
             cand = {
                 "code": code,
@@ -179,6 +191,8 @@ def main():
                 "limit_daily": daily,
                 "fee_original": fo,
                 "fee_discount": fd_,
+                **profile,
+                **performance,
                 "discovered_at": date.today().isoformat(),
                 "note": "自动发现候选，待人工确认后并入 funds",
             }
