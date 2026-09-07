@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import {
   emptyCandidateStore,
+  mergeFundDetails,
+  normalizeFund,
   recount,
   reviewCandidate,
   syncCandidates,
@@ -39,12 +41,22 @@ assert.equal(afterApproval.candidates.length, 0);
 
 assert.deepEqual(recount([{ category: "SP500", trackType: "equal_weight" }]), { total: 1, nasdaq100: 0, sp500: 1, equal_weight: 1 });
 
-const pausedLast = (a, b, ascending) => {
-  const statusDiff = (a.status === "paused" ? 1 : 0) - (b.status === "paused" ? 1 : 0);
+const enriched = normalizeFund({ code: "160213", management_fee: 0.8, return_1y: 12.81, tracking_error_annualized: 1.1 });
+assert.equal(enriched.management_fee, 0.8);
+assert.equal(enriched.return_1y, 12.81);
+assert.equal(enriched.tracking_error_annualized, 1.1);
+assert.deepEqual(
+  mergeFundDetails({ code: "160213", return_1y: 10 }, { return_1y: 12.81, management_fee: 0.8 }),
+  { code: "160213", return_1y: 12.81, management_fee: 0.8 },
+);
+
+const unavailableLast = (a, b, ascending) => {
+  const rank = fund => fund.status === "paused" ? 2 : fund.status === "limited" ? 1 : 0;
+  const statusDiff = rank(a) - rank(b);
   if (statusDiff) return statusDiff;
   return ascending ? a.limit_daily - b.limit_daily : b.limit_daily - a.limit_daily;
 };
-const sortable = [{ code: "open", status: "open", limit_daily: 100 }, { code: "paused", status: "paused", limit_daily: 1 }, { code: "unknown", status: "unknown", limit_daily: 10 }];
-assert.equal([...sortable].sort((a, b) => pausedLast(a, b, true)).at(-1).code, "paused");
-assert.equal([...sortable].sort((a, b) => pausedLast(a, b, false)).at(-1).code, "paused");
+const sortable = [{ code: "open", status: "open", limit_daily: 100 }, { code: "limited", status: "limited", limit_daily: 10 }, { code: "paused", status: "paused", limit_daily: 1 }, { code: "unknown", status: "unknown", limit_daily: 20 }];
+assert.deepEqual([...sortable].sort((a, b) => unavailableLast(a, b, true)).map(item => item.code), ["unknown", "open", "limited", "paused"]);
+assert.deepEqual([...sortable].sort((a, b) => unavailableLast(a, b, false)).map(item => item.code), ["open", "unknown", "limited", "paused"]);
 console.log("All merge and candidate-review tests passed.");

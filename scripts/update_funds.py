@@ -168,6 +168,33 @@ def fetch_profile(code):
     }
 
 
+def fetch_tracking_error(code):
+    """从特色数据页读取天天基金披露的年化跟踪误差及截至日期。"""
+    html = _get(f"https://fundf10.eastmoney.com/tsdata_{code}.html",
+                ref="https://fundf10.eastmoney.com/", attempts=3)
+    text = _strip_html(html)
+    match = re.search(
+        r"年化跟踪误差\s+同类平均跟踪误差\s+.*?\s+([\d.]+)%\s+[\d.]+%\s+"
+        r"截止至[：:]\s*(\d{4}-\d{2}-\d{2})",
+        text,
+    )
+    if not match:
+        raise ValueError("未找到年化跟踪误差")
+    return {
+        "tracking_error_annualized": _as_number(match.group(1)),
+        "tracking_error_as_of": match.group(2),
+    }
+
+
+def normalize_subscription_status(status, daily_limit):
+    """暂停优先；其余有明确日限额的基金统一视为限额申购。"""
+    if status == "paused":
+        return "paused"
+    if daily_limit is not None and daily_limit > 0:
+        return "limited"
+    return status
+
+
 def _months_before(day, months):
     year = day.year - (months // 12)
     month = day.month - (months % 12)
@@ -306,6 +333,7 @@ def main():
         try:
             status, minsub = fetch_status_and_min(code)
             daily, fo, fd_ = fetch_limit_and_fee(code)
+            status = normalize_subscription_status(status, daily)
         except Exception as e:
             warnings.append(f"{code} {name}: 抓取失败 {e}")
             report.append({"code": code, "name": name, "ok": False, "error": str(e)})
@@ -357,6 +385,12 @@ def main():
                     warn += f"；AkShare 补缺也失败 {e2}"
             warnings.append(warn)
 
+        try:
+            tracking = fetch_tracking_error(code)
+        except Exception as e:
+            tracking = {}
+            warnings.append(f"{code} {name}: 年化跟踪误差抓取失败，保留旧值 {e}")
+
         # 保留静态字段，仅覆盖动态字段
         old = {
             "limit_daily": fd.get("limit_daily"),
@@ -375,6 +409,8 @@ def main():
             "return_1y": fd.get("return_1y"),
             "return_5y": fd.get("return_5y"),
             "since_inception_annualized": fd.get("since_inception_annualized"),
+            "tracking_error_annualized": fd.get("tracking_error_annualized"),
+            "tracking_error_as_of": fd.get("tracking_error_as_of"),
         }
         fd["limit_daily"] = daily
         # 仅当抓取到明确状态时才覆盖，抓取失败（None）时保留上一份有效值，
@@ -391,6 +427,7 @@ def main():
             if value is not None:
                 fd[key] = value
         fd.update(performance)
+        fd.update(tracking)
 
         new = {
             "limit_daily": fd["limit_daily"],
@@ -409,6 +446,8 @@ def main():
             "return_1y": fd.get("return_1y"),
             "return_5y": fd.get("return_5y"),
             "since_inception_annualized": fd.get("since_inception_annualized"),
+            "tracking_error_annualized": fd.get("tracking_error_annualized"),
+            "tracking_error_as_of": fd.get("tracking_error_as_of"),
         }
         if new != old:
             changed += 1
@@ -445,6 +484,8 @@ def main():
         "inception_date": "基金成立日期",
         "return_3m/return_6m/return_1y/return_5y": "按同一截至日的复权单位净值计算的区间收益率（%）；存续期不足对应期间则为空",
         "since_inception_annualized": "按复权单位净值计算的成立以来年化收益率（%），仅作补充，不与固定观察期横向比较",
+        "tracking_error_annualized": "天天基金特色数据页披露的年化跟踪误差（%）",
+        "tracking_error_as_of": "年化跟踪误差的披露截至日期",
     })
 
     if not dry:

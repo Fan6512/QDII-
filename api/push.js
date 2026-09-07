@@ -1,6 +1,6 @@
 import { redis } from "../lib/redis.js";
 import { authorized, unauthorized } from "../lib/auth.js";
-import { syncFunds } from "../lib/merge.js";
+import { mergeFundDetails, syncFunds } from "../lib/merge.js";
 
 export const config = { runtime: "edge" };
 
@@ -36,14 +36,7 @@ export default async function handler(req) {
     const saved = approved?.[candidate.code];
     if (!saved) return [];
     const fund = typeof saved === "string" ? JSON.parse(saved) : saved;
-    const dynamic = {
-      ...fund,
-      limit_daily: candidate.limit_daily ?? fund.limit_daily,
-      fee_original: candidate.fee_original ?? fund.fee_original,
-      fee_discount: candidate.fee_discount ?? fund.fee_discount,
-      min_subscribe: candidate.min_subscribe ?? fund.min_subscribe,
-      status: candidate.status === "unknown" ? fund.status : candidate.status,
-    };
+    const dynamic = mergeFundDetails(fund, candidate);
     return [redis.hset("approved-funds", { [candidate.code]: JSON.stringify(dynamic) })];
   });
   await Promise.all([
