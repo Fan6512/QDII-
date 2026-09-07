@@ -2,7 +2,7 @@
   "_meta": {
     "title": "场外 QDII 指数基金额度 - 核对版基金池",
     "description": "用于 MVP 的基金清单，代码/费率/申购状态均经天天基金公开接口核对（非 LLM 臆造）。",
-    "generated_at": "2026-09-04",
+    "generated_at": "2026-09-07",
     "data_source": "天天基金（东方财富）公开接口",
     "extraction_method": {
       "基金代码/简称/申购状态/起购金额": "天天基金搜索 API https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx (FundBaseInfo.ISBUY=1 表示开放申购, MINSG 为起购金额)",
@@ -52,9 +52,9 @@
       "equal_weight": 1
     },
     "fields_updated_note": "limit_daily 已由脚本抓取自天天基金 jjfl 费率页的「日累计申购限额」字段(2026-08-13)，这是工具核心字段；min_subscribe 仍为起购门槛",
-    "last_auto_update": "2026-09-04",
+    "last_auto_update": "2026-09-07",
     "update_method": "脚本自动刷新(update_funds.py)：动态字段取自天天基金公开页面(搜索API FundBaseInfo + jjfl 费率页)，基金资料页与净值序列；分类字段(code/name/category/trackType)由人工维护",
-    "last_discover_at": "2026-09-04",
+    "last_discover_at": "2026-09-07",
     "candidates_note": "顶层 candidates 数组由 auto_discover.py 自动发现、待人工确认后并入 funds。确认方式：在对话里让助手执行 merge_candidates.py 按代码合入，再重新部署，网页即更新。绝不自动加入 funds。"
   },
   "funds": [
@@ -66,7 +66,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -74,12 +74,12 @@
       "fund_scale_billion": 29.69,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-09-25",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -4.95,
-      "return_6m": 13.36,
-      "return_1y": 18.65,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -3.68,
+      "return_6m": 16.03,
+      "return_1y": 19.01,
       "return_5y": null,
-      "since_inception_annualized": 20.6
+      "since_inception_annualized": 21.01
     },
     {
       "code": "019547",
@@ -89,7 +89,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -97,12 +97,12 @@
       "fund_scale_billion": 21.78,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-11-29",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -4.85,
-      "return_6m": 13.68,
-      "return_1y": 18.31,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -3.58,
+      "return_6m": 16.26,
+      "return_1y": 18.65,
       "return_5y": null,
-      "since_inception_annualized": 17.4
+      "since_inception_annualized": 17.83
     },
     {
       "code": "019524",
@@ -112,7 +112,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -120,12 +120,12 @@
       "fund_scale_billion": 8.16,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-10-19",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -5.13,
-      "return_6m": 13.46,
-      "return_1y": 17.41,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -3.86,
+      "return_6m": 16.08,
+      "return_1y": 17.78,
       "return_5y": null,
-      "since_inception_annualized": 18.57
+      "since_inception_annualized": 18.99
     },
     {
       "code": "040046",
@@ -135,7 +135,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.6,
@@ -143,12 +143,12 @@
       "fund_scale_billion": 58.1,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2013-08-02",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -6.07,
-      "return_6m": 13.4,
-      "return_1y": 18.17,
-      "return_5y": 78.8,
-      "since_inception_annualized": 17.34
+      "performance_as_of": "2026-09-02",
+      "return_3m": -4.74,
+      "return_6m": 16.15,
+      "return_1y": 18.54,
+      "return_5y": 80.28,
+      "since_inception_annualized": 17.43
     },
     {
       "code": "016452",
@@ -158,7 +158,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -166,12 +166,12 @@
       "fund_scale_billion": 62.1,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2022-11-29",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -5.33,
-      "return_6m": 13.4,
-      "return_1y": 17.98,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -4.04,
+      "return_6m": 16.09,
+      "return_1y": 18.34,
       "return_5y": null,
-      "since_inception_annualized": 24.29
+      "since_inception_annualized": 24.63
     },
     {
       "code": "019441",
@@ -181,7 +181,7 @@
       "trackType": "index",
       "fee_original": 1.0,
       "fee_discount": 0.1,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -189,12 +189,12 @@
       "fund_scale_billion": 9.68,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-09-27",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -4.74,
-      "return_6m": 13.66,
-      "return_1y": 18.55,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -3.45,
+      "return_6m": 16.33,
+      "return_1y": 18.89,
       "return_5y": null,
-      "since_inception_annualized": 18.98
+      "since_inception_annualized": 19.39
     },
     {
       "code": "019736",
@@ -204,7 +204,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -212,12 +212,12 @@
       "fund_scale_billion": 10.63,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2024-03-22",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -4.98,
-      "return_6m": 13.04,
-      "return_1y": 17.92,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -3.7,
+      "return_6m": 15.7,
+      "return_1y": 18.26,
       "return_5y": null,
-      "since_inception_annualized": 17.18
+      "since_inception_annualized": 17.67
     },
     {
       "code": "539001",
@@ -227,7 +227,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.8,
@@ -235,12 +235,12 @@
       "fund_scale_billion": 21.76,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2010-09-14",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -5.0,
-      "return_6m": 13.39,
-      "return_1y": 17.21,
-      "return_5y": 94.04,
-      "since_inception_annualized": 7.98
+      "performance_as_of": "2026-09-02",
+      "return_3m": -3.77,
+      "return_6m": 15.73,
+      "return_1y": 17.52,
+      "return_5y": 96.14,
+      "since_inception_annualized": 8.05
     },
     {
       "code": "000834",
@@ -250,7 +250,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.8,
@@ -258,12 +258,12 @@
       "fund_scale_billion": 48.87,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2014-11-13",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -5.9,
-      "return_6m": 12.65,
-      "return_1y": 17.75,
-      "return_5y": 79.95,
-      "since_inception_annualized": 16.77
+      "performance_as_of": "2026-09-02",
+      "return_3m": -4.56,
+      "return_6m": 15.37,
+      "return_1y": 18.16,
+      "return_5y": 81.52,
+      "since_inception_annualized": 16.87
     },
     {
       "code": "018966",
@@ -273,7 +273,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -281,12 +281,12 @@
       "fund_scale_billion": 16.33,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-08-02",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -5.35,
-      "return_6m": 12.56,
-      "return_1y": 16.53,
+      "performance_as_of": "2026-09-02",
+      "return_3m": -4.17,
+      "return_6m": 15.04,
+      "return_1y": 16.77,
       "return_5y": null,
-      "since_inception_annualized": 17.08
+      "since_inception_annualized": 17.43
     },
     {
       "code": "270042",
@@ -296,7 +296,7 @@
       "trackType": "index",
       "fee_original": 1.3,
       "fee_discount": 0.13,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 5,
       "limit_daily": 5,
       "management_fee": 0.8,
@@ -304,12 +304,12 @@
       "fund_scale_billion": 122.23,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2012-08-15",
-      "performance_as_of": "2026-09-01",
-      "return_3m": -5.92,
-      "return_6m": 12.75,
-      "return_1y": 17.2,
-      "return_5y": 76.62,
-      "since_inception_annualized": 16.3
+      "performance_as_of": "2026-09-02",
+      "return_3m": -4.6,
+      "return_6m": 15.41,
+      "return_1y": 17.58,
+      "return_5y": 78.06,
+      "since_inception_annualized": 16.38
     },
     {
       "code": "017641",
@@ -319,7 +319,7 @@
       "trackType": "index",
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 0.5,
@@ -327,12 +327,12 @@
       "fund_scale_billion": 53.03,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2023-04-06",
-      "performance_as_of": "2026-09-01",
-      "return_3m": 0.33,
-      "return_6m": 9.57,
-      "return_1y": 13.91,
+      "performance_as_of": "2026-09-02",
+      "return_3m": 2.03,
+      "return_6m": 11.79,
+      "return_1y": 14.43,
       "return_5y": null,
-      "since_inception_annualized": 16.93
+      "since_inception_annualized": 17.26
     },
     {
       "code": "096001",
@@ -342,7 +342,7 @@
       "trackType": "equal_weight",
       "fee_original": 1.5,
       "fee_discount": 0.15,
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 10,
       "management_fee": 1.0,
@@ -350,12 +350,12 @@
       "fund_scale_billion": 7.3,
       "fund_scale_date": "2026-06-30",
       "inception_date": "2011-03-23",
-      "performance_as_of": "2026-09-01",
-      "return_3m": 2.86,
-      "return_6m": 3.85,
-      "return_1y": 8.94,
-      "return_5y": 35.46,
-      "since_inception_annualized": 8.53
+      "performance_as_of": "2026-09-02",
+      "return_3m": 3.7,
+      "return_6m": 5.36,
+      "return_1y": 9.61,
+      "return_5y": 36.56,
+      "since_inception_annualized": 8.57
     }
   ],
   "candidates": [
@@ -366,12 +366,12 @@
       "category": "NASDAQ100",
       "trackType": "index",
       "company": "天弘基金",
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 100,
       "fee_original": 1.0,
       "fee_discount": 0.1,
-      "discovered_at": "2026-09-04",
+      "discovered_at": "2026-09-07",
       "note": "自动发现候选，待人工确认后并入 funds"
     },
     {
@@ -381,12 +381,12 @@
       "category": "NASDAQ100",
       "trackType": "index",
       "company": "国泰基金",
-      "status": "open",
+      "status": "unknown",
       "min_subscribe": 10,
       "limit_daily": 100,
       "fee_original": 1.5,
       "fee_discount": 0.15,
-      "discovered_at": "2026-09-04",
+      "discovered_at": "2026-09-07",
       "note": "自动发现候选，待人工确认后并入 funds"
     },
     {
@@ -401,7 +401,7 @@
       "limit_daily": 100,
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "discovered_at": "2026-09-04",
+      "discovered_at": "2026-09-07",
       "note": "自动发现候选，待人工确认后并入 funds"
     },
     {
@@ -416,7 +416,7 @@
       "limit_daily": 10,
       "fee_original": 1.2,
       "fee_discount": 0.12,
-      "discovered_at": "2026-09-04",
+      "discovered_at": "2026-09-07",
       "note": "自动发现候选，待人工确认后并入 funds"
     }
   ]
